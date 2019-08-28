@@ -17,7 +17,7 @@ def do_voltage_and_bowl(epos,p_volt,p_bowl):
     
     p_volt = v_corr.basic_voltage_correction(epos['tof'],epos['v_dc'],p_volt,ROI, TOF_BIN_SIZE)
     tof_vcorr = v_corr.mod_basic_voltage_correction(p_volt,epos['tof'],epos['v_dc'])
-    
+        
     p_bowl = b_corr.geometric_bowl_correction(tof_vcorr,epos['x_det'],epos['y_det'],p_bowl,ROI, TOF_BIN_SIZE)
     tof_bcorr = b_corr.mod_geometric_bowl_correction(p_bowl,epos['tof'],epos['x_det'],epos['y_det'])
     
