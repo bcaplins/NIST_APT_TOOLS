@@ -10,6 +10,10 @@ import numpy as np
 from scipy.signal.windows import gaussian
 from helper_functions import bin_dat
 from scipy.optimize import least_squares
+from scipy.optimize import minimize
+
+from scipy.optimize import curve_fit
+
 import matplotlib.pyplot as plt
 
 
@@ -61,6 +65,49 @@ def est_hwhm(dat):
     return hwhm_est
 
 
+def physics_bg(xs,alpha):
+    return alpha*np.reciprocal(np.sqrt(xs+0.1))
+
+def fit_uncorr_bg(dat,fit_roi=[3,6]):
+
+    xs_full, ys_full = bin_dat(dat,user_roi=[0,100],isBinAligned=True)
+    
+    xs = xs_full[(xs_full>fit_roi[0]) & (xs_full<fit_roi[1])]
+    ys = ys_full[(xs_full>fit_roi[0]) & (xs_full<fit_roi[1])]
+    
+    opt_fun = lambda p: np.sum(np.square(physics_bg(xs,*p)-ys))
+    
+    p_guess = np.array([100])
+    
+    
+    
+    opts = {'xatol' : 1e-5,
+            'fatol' : 1e-12,
+             'maxiter' : 512,
+             'maxfev' : 512,
+             'disp' : True}
+    res = minimize(opt_fun, 
+                   p_guess,
+                   options=opts,
+                   method='Nelder-Mead')  
+    
+    mod_bg = physics_bg(xs_full,res.x)
+        
+    fig = plt.figure(num=1299)
+    fig.clear()
+    ax = plt.axes()
+    
+    
+    ax.plot(xs_full,mod_bg)
+    
+    return res.x
+    
+    
+
+def pk_mod_fun(x,amp,x0,sigma,b):
+    return amp*b_G(x,sigma,x0)+b
+        
+
 
 
 def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
@@ -79,33 +126,79 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
     
     ys_smoothed = do_smooth_with_gaussian(ys,std)
     
-    pk_mod_fun = lambda x,amp,x0,sigma,b: amp*b_G(x,sigma,x0)+b
-    resid_func = lambda p: pk_mod_fun(xs,*p)-ys_smoothed
+    
+    opt_fun = lambda p: np.sum(np.square(pk_mod_fun(xs, *p)-ys_smoothed))
+
+    
+
+#    def resid_func(p): 
+#        return pk_mod_fun(xs,*p)-ys_smoothed
+    
+    N4 = ys_smoothed.size//4
+    mx_idx = np.argmax(ys_smoothed[N4:(3*N4)])+N4
     
     if(user_p0.size == 0):
-        p0 = np.array([np.max(ys_smoothed)-np.min(ys_smoothed), np.percentile(xs,50), 0.025,  np.min(ys_smoothed)])
+        p0 = np.array([ys_smoothed[mx_idx]-np.min(ys_smoothed), xs[mx_idx], 0.015,  np.percentile(ys_smoothed,20)])
     else:
         p0 = user_p0    
         
     # b_model2(x,amp_g,x0,sigma,b):
-    lbs = np.array([0,       np.percentile(xs,10),  0.01,   0])
+    lbs = np.array([0,       np.percentile(xs,10),  0.007,   0])
     ubs = np.array([2*p0[0],  np.percentile(xs,90), 0.10,   p0[0]])
 
     # Force in bounds
-    p0 = np.sort(np.c_[lbs,p0,ubs])[:,1]
+    p_guess = np.sort(np.c_[lbs,p0,ubs])[:,1]
     
-    popt = least_squares(resid_func, p0, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
+    
+#    popt2, pcov =  = curve_fit(pk_mod_fun, xs, ys_smoothed, p0=p_guess, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
+#    popt2, pcov =  = curve_fit(pk_mod_fun, xs, ys_smoothed)
+    
+    
+    bnds = ((0,2*p0[0]),
+            (np.percentile(xs,10),np.percentile(xs,90)),
+             (0.007,0.1),
+             (0,p0[0]))
+    
+
+    opts = {'xatol' : 1e-5,
+            'fatol' : 1e-12,
+             'maxiter' : 1024,
+             'maxfev' : 1024,
+             'disp' : True}
+    
+    res = minimize(opt_fun, 
+                   p_guess,
+                   options=opts,
+#                   bounds=bnds,
+                   method='Nelder-Mead')  
+
+
+    print(res.x)
+    
+    
+#    popt2 = least_squares(resid_func, x0=p0, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
+#    curve_fit(pk_mod_fun, xs, ys_smoothed, p0=p0)
+    
 #    popt = least_squares(resid_func, p0, verbose=0, ftol=1e-12, max_nfev=2048)
 
     fig = plt.figure(num=999)
     fig.clear()
     ax = plt.axes()
     
-    ax.plot(xs,ys,'.')
-    ax.plot(xs,ys_smoothed)
+    ax.plot(xs,ys,'.',label='raw')
+    ax.plot(xs,ys_smoothed,label='smoothed')
     
-    mod_y = pk_mod_fun(xs,*popt.x)
-    ax.plot(xs,mod_y)
+    mod_y = pk_mod_fun(xs,*p_guess)
+    ax.plot(xs,mod_y,label='guess')
+    
+    
+    mod_y = pk_mod_fun(xs,*res.x)
+    
+    ax.plot(xs,mod_y,label='fit')
+    
+    ax.legend()
+    
+    
     
     plt.pause(.001)
 #
@@ -123,7 +216,7 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
 #
 #
 
-    return popt.x
+    return res.x
 
 
 def est_hwhm2(dat):
@@ -147,6 +240,7 @@ def est_hwhm2(dat):
 
     # Force in bounds
     p0 = np.sort(np.c_[lbs,p0,ubs])[:,1]
+    
     
     popt = least_squares(resid_func, p0, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
 #    popt = least_squares(resid_func, p0, verbose=0, ftol=1e-12, max_nfev=2048)
@@ -328,12 +422,15 @@ def get_range_empirical(xs,ys_smoothed):
 
 
 
+def get_peak_count(dat,rng):
+    cts = dat[(dat>=rng[0]) & (dat<=rng[1])].size
+    return cts
 
-def get_peak_count(dat,rng,bl_est_per_mDa):
-    bg_cts = 1000*(rng[1]-rng[0])*bl_est_per_mDa
-    tot_cts = dat[(dat>=rng[0]) & (dat<=rng[1])].size
-    pk_cts = tot_cts-bg_cts
-    return np.array([pk_cts, bg_cts])
+#def get_peak_count(dat,rng,bl_est_per_mDa):
+#    bg_cts = 1000*(rng[1]-rng[0])*bl_est_per_mDa
+#    tot_cts = dat[(dat>=rng[0]) & (dat<=rng[1])].size
+#    pk_cts = tot_cts-bg_cts
+#    return np.array([pk_cts, bg_cts])
     
 
 
