@@ -11,6 +11,9 @@ Original functions by https://github.com/oscarbranson
 
 import numpy as np
 
+
+
+
 def read_pos_numpy(file_path):
     """ Loads an APT .pos file as np struct array
     Columns:
@@ -22,10 +25,10 @@ def read_pos_numpy(file_path):
         raise ValueError("File Path does not end with .pos.")
     with open(file_path, 'rb') as f:
         # >f4 is big endian 4 byte float
-        dt_type = np.dtype({'names': ['x', 'y', 'z', 'm2q'],
-                            'formats': ['>f4', '>f4', '>f4', '>f4']})
+        pos_d_type = np.dtype({'names': ['x', 'y', 'z', 'm2q'],
+                             'formats': ['>f4', '>f4', '>f4', '>f4']})
         # returns a numpy array, where you can, for example, access all 'x' by pos_arr['x'] and so on
-        pos_arr = np.fromfile(f, dt_type, -1)
+        pos_arr = np.fromfile(f, pos_d_type, -1)
     return pos_arr
 
 
@@ -63,11 +66,26 @@ def read_epos_numpy(file_path):
         raise ValueError("File Path does not end with .epos.")
     with open(file_path, 'rb') as f:
         # >f4 is big endian 4 byte float
-        dt_type = np.dtype({'names': ['x', 'y', 'z', 'm2q', 'tof', 'v_dc', 'v_pulse', 'x_det', 'y_det', 'pslep', 'ipp'],
-                            'formats': ['>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i4', '>i4']})
+        epos_d_type = np.dtype({'names': ['x', 'y', 'z', 'm2q', 'tof', 'v_dc', 'v_pulse', 'x_det', 'y_det', 'pslep', 'ipp'],
+                                'formats': ['>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i4', '>i4']})
+
         # returns a numpy array, where you can, for example, access all 'x' by pos_arr['x'] and so on
-        pos_arr = np.fromfile(f, dt_type, -1)
+        pos_arr = np.fromfile(f, epos_d_type, -1)
     return pos_arr
+
+def write_epos_numpy(epos, fn):
+    if not fn.lower().endswith('.epos'):
+        fn += '.epos'
+    with open(fn,'wb') as f:
+        bytes_written = f.write(epos.tobytes())
+    return (bytes_written == epos.nbytes), fn
+
+def write_pos_numpy(pos, fn):
+    if not fn.lower().endswith('.pos'):
+        fn += '.pos'
+    with open(fn,'wb') as f:
+        bytes_written = f.write(pos.tobytes())
+    return (bytes_written == pos.nbytes), fn 
 
 
 #def read_rrng(f):

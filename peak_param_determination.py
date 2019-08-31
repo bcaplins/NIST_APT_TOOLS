@@ -249,12 +249,16 @@ def est_hwhm2(dat):
     fig.clear()
     ax = plt.axes()
     
-    ax.plot(xs,ys,'.')
-    ax.plot(xs,ys_smoothed)
+    ax.plot(xs,ys,'.',label='1 mDa')
+    ax.plot(xs,ys_smoothed,label='smooth')
     
     mod_y = pk_mod_fun(xs,*popt.x)
-    ax.plot(xs,mod_y)
+    ax.plot(xs,mod_y,label='optimized')
     
+    mod_y = pk_mod_fun(xs,*p0)
+    ax.plot(xs,mod_y,label='guess')
+    
+    ax.legend()
     plt.pause(0.001)
 #
 #    # Find halfway down and up each side

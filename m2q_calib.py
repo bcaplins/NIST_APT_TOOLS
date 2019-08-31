@@ -12,9 +12,15 @@ from scipy.optimize import minimize
 import peak_param_determination as ppd
 
 from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 
 def align_m2q_to_ref_m2q(ref_m2q,tof):
+    
+    
+    
+    
+    
     ROI = [0.5, 120]
     BIN_SIZE = 0.01
     
@@ -23,21 +29,63 @@ def align_m2q_to_ref_m2q(ref_m2q,tof):
 
     SCALES = np.array([1e-4, 1])
 
-    com_ref = np.mean(ref_m2q)
-    com = np.mean(tof**2)
+#    com_ref = np.mean(ref_m2q)
+#    com = np.mean(tof**2)
+
+    t0 = 0
+#    c = com_ref/com
+
+    com_ref = np.median(ref_m2q)
+    com = np.median(tof**2)
+    c = com_ref/com    
+#    c = 1.39325423*1e-4
+
+
+    h1, e1 = np.histogram(ref_m2q,bins=N_BIN,density=True)
+    h2, e2 = np.histogram(tof**2,bins=N_BIN,density=True)
     
-    t0 = -5.0
-    c = com_ref/com
+    h1 = h1*np.diff(e1)[0]
+    h2 = h2*np.diff(e2)[0]
     
+        
+#    fig = plt.figure(num=105)
+#
+#    ax = plt.gca()
+#    ax.clear()
+#    ax.plot(e1[1:],h1,label='ref')
+#    ax.plot(e2[1:],h2,label='curr')
+#    
+#    plt.pause(5)
+    
+    
+    NP = 20;
+    com_ref = np.mean(np.power(h1,NP)*e1[1:])/np.sum(np.power(h1,NP))
+    com = np.mean(np.power(h2,NP)*e2[1:])/np.sum(np.power(h2,NP))
+    c = com_ref/com    
+    
+    print("c_guess = "+str(c))
+#    c = 1.39325423*1e-4
+
+
+
     
     # Brute force search to find correct minimum
     ref_histo = np.histogram(ref_m2q,range=(ROI[0], ROI[1]),bins=N_BIN,density=True)[0]
     curr_histo = lambda p: np.histogram(mod_physics_m2q_calibration(np.array([p[0],t0]),tof),range=(ROI[0], ROI[1]),bins=N_BIN,density=True)[0]
     
+    
+#    fig = plt.figure(num=103)
+#
+#    ax = plt.gca()
+#    ax.clear()
+#    ax.plot(ref_histo,label='ref')
+#    ax.plot(curr_histo(np.array([c/SCALES[0], 0])),label='curr')
+#    
+#    plt.pause(1)
     opt_fun = lambda p: -1*BIN_SIZE*np.sum(ref_histo*curr_histo(p))
     
     N_SLICE = 128
-    fractional_range = 0.1
+    fractional_range = 0.2
     
     p_range = ( ((1-fractional_range)*c/SCALES[0], (1+fractional_range)*c/SCALES[0]),)
     res = brute(opt_fun,

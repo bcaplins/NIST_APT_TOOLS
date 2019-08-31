@@ -45,15 +45,15 @@ def forward_moving_average(a, n=3, reverse=False) :
 # Read in template spectrum
 fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
 ref_epos = apt.read_epos_numpy(fn)
-
+ref_epos = ref_epos[0:ref_epos.size//2]
 
 # Read in data
 fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
 epos = apt.read_epos_numpy(fn)
+epos = epos[epos.size//2:-1]
 
 wall_time = np.cumsum(epos['pslep'])/10000.0
 pulse_idx = np.arange(0,epos.size)
-
 
 # Voltage and bowl correct ToF data
 p_volt = np.array([])
@@ -65,6 +65,20 @@ print("time to voltage and bowl correct:    "+str(time.time()-t_i)+" seconds")
 
 # Find c and t0 for ToF data based on reference spectrum
 m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr)
+
+full_roi = np.array([0, 100])
+xs_full_1mDa, ys_full_1mDa = bin_dat(m2q_corr,user_roi=full_roi,isBinAligned=True)
+ys_full_5mDa_sm = ppd.do_smooth_with_gaussian(ys_full_1mDa, std=5)
+
+xs_full_1mDa_ref, ys_full_1mDa_ref = bin_dat(ref_epos['m2q'],user_roi=full_roi,isBinAligned=True)
+ys_full_5mDa_sm_ref = ppd.do_smooth_with_gaussian(ys_full_1mDa_ref, std=5)
+
+
+fig = plt.figure(num=101)
+fig.clear()
+ax = plt.axes()
+ax.plot(xs_full_1mDa_ref,ys_full_5mDa_sm_ref,label='ref')
+ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='dat')
 
 ed = initElements_P3.initElements()
 
@@ -203,7 +217,7 @@ for idx,pk_param in enumerate(pk_params):
     ax.plot(np.array([1,1])*pk_param['post_rng'] ,np.array([0,1])*(pk_param['amp']+pk_param['off']),'k--')
 #    ax.plot(np.array([1,1])*(pk_param['x0']+1*pk_param['std_fit'])   ,np.array([np.min(ys_smoothed),np.max(ys_smoothed)]),'k--')
 #    ax.plot(np.array([1,1])*(pk_param['x0']+5*pk_param['std_fit']),np.array([np.min(ys_smoothed),np.max(ys_smoothed)]),'k--')
-    plt.pause(.1)
+    plt.pause(2)
 
 ax.clear()
 ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='5 mDa smooth')    
@@ -259,38 +273,80 @@ loc_stoich = loc_res/np.sum(loc_res)
 tot_res = np.sum(stoich*tot_cts,axis=0)
 tot_stoich = tot_res/np.sum(tot_res)
 
-diff = tot_res/np.sum(tot_res)-pk_res/np.sum(pk_res)
+
+
 
 print(tot_stoich,loc_stoich,glob_stoich)
     
 
 raise SystemExit(0)
 
+  
 
+stoich = np.c_[pk_data['N_at_ct'][pk_data['is_anal_pk'],None],pk_data['Ga_at_ct'][pk_data['is_anal_pk'],None]]
+cts = np.zeros(np.sum(pk_data['is_anal_pk']))-1
+
+singles = m2q_corr[epos['ipp']==1];
+multiples = m2q_corr[epos['ipp']!=1];
+
+
+dat_set = m2q_corr
+dat_set = singles
+dat_set = multiples
+
+for idx,pk_param in enumerate(pk_params):
+    pre_pk_rng = [pk_param['pre_bg']-0.15,pk_param['pre_bg']-0.05]
+    pk_rng = [pk_param['pre_rng'],pk_param['post_rng']]
     
+    tot_cts = np.sum((dat_set>=pk_rng[0]) & (dat_set<=pk_rng[1]))
     
+    cts[idx] = tot_cts
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+tot_cts = cts[:,None]
+
+tot_res = np.sum(stoich*tot_cts,axis=0)
+tot_stoich = tot_res/np.sum(tot_res)
+
+
+Ga3p = np.sum(tot_cts[3:4+1])
+Ga2p = np.sum(tot_cts[7:8+1])
+Ga1p = np.sum(tot_cts[12:13+1])
+
+print(Ga1p/Ga2p)
+
+print(tot_stoich)
     
     
     
 
-    
-    
-    
-    
+full_roi = np.array([0, 100])
+xs_full_1mDa, ys_full_1mDa = bin_dat(m2q_corr,user_roi=full_roi,isBinAligned=True)
+ys_full_20mDa_sm = ppd.do_smooth_with_gaussian(ys_full_1mDa, std=50)
+
+_, ys_singles_1mDa = bin_dat(singles,user_roi=full_roi,isBinAligned=True)
+ys_singles_20mDa_sm = ppd.do_smooth_with_gaussian(ys_singles_1mDa, std=50)
+
+_, ys_multiples_1mDa = bin_dat(multiples,user_roi=full_roi,isBinAligned=True)
+ys_multiples_20mDa_sm = ppd.do_smooth_with_gaussian(ys_multiples_1mDa, std=50)
+
+
+ax.clear()
+ax.plot(xs_full_1mDa,ys_full_20mDa_sm,label='all')    
+ax.plot(xs_full_1mDa,ys_singles_20mDa_sm,label='singles')    
+ax.plot(xs_full_1mDa,ys_multiples_20mDa_sm,label='multiples')    
+
+
+
+fig = plt.figure(num=222)
+fig.clear()
+ax = plt.axes()
+
+ax.clear()
+ax.plot(xs_full_1mDa,(ys_multiples_20mDa_sm-ys_singles_20mDa_sm)/(ys_multiples_20mDa_sm+ys_singles_20mDa_sm),label='MULT-SING/MULT+SING')    
+#ax.set_yscale('log')
+ax.set(ylim=[-0.5,0.5])
+ax.legend()
     
     
     
