@@ -12,6 +12,31 @@ Original functions by https://github.com/oscarbranson
 import numpy as np
 
 
+#import configparser
+#def read_rrng(fn):
+#    config = configparser.ConfigParser()
+#    
+#    sections = config.sections()
+#    
+#    hasIonSect = any(elem == 'Ions' for elem in sections)
+#    hasRangeSect = any(elem == 'Ranges' for elem in sections)
+#    if (not hasIonSect) or (not hasRangeSect):
+#        assert Exception('Bad rrng file.  Lacks a section.')
+#    
+#    options = config.options('Ions')
+#    for idx, opt in enumerate(options):
+#        if(idx == 0):
+#            if opt != 'number'
+#            print(opt)
+#            print(config.get('Ions',opt))
+#    for idx, opt in enumerate(options):
+#        print(opt)
+#        print(config.get('Ions',opt))
+#        
+#    
+#    return
+
+
 
 
 def read_pos_numpy(file_path):

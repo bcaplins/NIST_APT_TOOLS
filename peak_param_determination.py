@@ -8,11 +8,11 @@ Created on Wed Aug 28 13:40:36 2019
 import numpy as np
 
 from scipy.signal.windows import gaussian
-from helper_functions import bin_dat
+from histogram_functions import bin_dat
 from scipy.optimize import least_squares
 from scipy.optimize import minimize
 
-from scipy.optimize import curve_fit
+#from scipy.optimize import curve_fit
 
 import matplotlib.pyplot as plt
 
@@ -21,6 +21,23 @@ import matplotlib.pyplot as plt
 def b_G(x,sigma,x0):
     return np.exp(-np.square(x-x0)/(2*np.square(sigma)))
 
+def moving_average(a, n=3) :    
+    # Moving average with reflection at the boundaries
+    if 2*n+1>a.size:
+        raise Exception('The kernel is too big!')
+    kern = np.ones(2*n+1)/(2*n+1)
+    return np.convolve(np.r_[a[n:0:-1],a,a[-2:-n-2:-1]],kern,'valid')
+
+def forward_moving_average(a, n=3, reverse=False) :    
+    # Moving average with reflection at the boundaries
+    if n>a.size:
+        raise Exception('The kernel is too big!')    
+    kern = np.ones(n)/n
+    if not reverse:
+        ret = np.convolve(np.r_[a,a[-2:-n-1:-1]],kern,'valid')
+    else:
+        ret = np.convolve(np.r_[a[n-1:0:-1],a],kern,'valid')
+    return ret
 
 
 def est_hwhm(dat):
@@ -363,7 +380,10 @@ def mean_shift_peak_location(dat,user_std=-1,user_x0=-1):
     if user_std>0:
         hwhm = np.sqrt(2*np.log(2))*user_std
     else:
-        hwhm = est_hwhm2(dat)
+        popt = fit_to_g_off(dat,user_std=5)
+        #amp_g,x0,sigma,b
+        hwhm = np.sqrt(2*np.log(2))*popt[2]
+#        hwhm = est_hwhm2(dat)
     
     prev_est = np.inf
     

@@ -21,23 +21,19 @@ import peak_param_determination as ppd
 from histogram_functions import bin_dat
 from voltage_and_bowl import do_voltage_and_bowl
 
-
-# Read in template spectrum
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
-ref_epos = apt_fileio.read_epos_numpy(fn)
-ref_epos = ref_epos[0:ref_epos.size//2]
-
 # Read in data
 fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
-epos = apt_fileio.read_epos_numpy(fn)
-epos = epos[epos.size//2:-1]
+new_fn = fn[:-5]+'_vbm_corr.epos'
+epos = apt_fileio.read_epos_numpy(new_fn)
+#epos = epos[epos.size//2:-1]
 
-# Plot TOF vs wall_time and show the current ROI selection
-roi_event_idxs = np.arange(1000,epos.size-1000)
-ax = plotting_stuff.plot_TOF_vs_time(epos['tof'],epos,1)
+# Plot m2q vs event index and show the current ROI selection
+#roi_event_idxs = np.arange(1000,epos.size-1000)
+roi_event_idxs = np.arange(epos.size)
+ax = plotting_stuff.plot_m2q_vs_time(epos['m2q'],epos,1)
 ax.plot(roi_event_idxs[0]*np.ones(2),[0,1200],'--k')
 ax.plot(roi_event_idxs[-1]*np.ones(2),[0,1200],'--k')
-ax.set_title('ROI selected to start analysis')
+ax.set_title('roi selected to start analysis')
 epos = epos[roi_event_idxs]
 
 # Compute some extra information from epos information
@@ -45,114 +41,38 @@ wall_time = np.cumsum(epos['pslep'])/10000.0
 pulse_idx = np.arange(0,epos.size)
 isSingle = np.nonzero(epos['ipp'] == 1)
 
-# Voltage and bowl correct ToF data
-p_volt = np.array([])
-p_bowl = np.array([])
-t_i = time.time()
-tof_corr, p_volt, p_bowl = do_voltage_and_bowl(epos,p_volt,p_bowl)
-print("time to voltage and bowl correct:    "+str(time.time()-t_i)+" seconds")
-
-# Plot TOF vs wall_time with voltage overlaid to show if voltage corr went ok
-
-
-# Plot slices from the detector to show if bowl corr went ok
-
-
-# Find c and t0 for ToF data based on aligning to reference spectrum
-m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr)
-
-# Define calibration peaks
+# Define peaks to range
 ed = initElements_P3.initElements()
-ref_pk_m2qs = np.array([ed['H'].isotopes[1][0],
-                    ed['N'].isotopes[14][0],
-                    2*ed['N'].isotopes[14][0],
-                    (1/2)*ed['Ga'].isotopes[69][0],
-                    (1/2)*ed['Ga'].isotopes[71][0],
-                    ed['Ga'].isotopes[69][0],
-                    ed['Ga'].isotopes[71][0]])
-
-# Perform 'linearization' m2q calibration
-m2q_corr2 = m2q_calib.calibrate_m2q_by_peak_location(m2q_corr,ref_pk_m2qs)
-
-# Plot the reference spectrum, (c, t0) corr spectrum and linearized spectrum
-#     to confirm that mass calibration went ok
-
-
-# Save the data as a new epos file
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-full_roi = np.array([0, 100])
-xs_full_1mDa, ys_full_1mDa = bin_dat(m2q_corr,user_roi=full_roi,isBinAligned=True)
-ys_full_5mDa_sm = ppd.do_smooth_with_gaussian(ys_full_1mDa, std=5)
-
-xs_full_1mDa_ref, ys_full_1mDa_ref = bin_dat(ref_epos['m2q'],user_roi=full_roi,isBinAligned=True)
-ys_full_5mDa_sm_ref = ppd.do_smooth_with_gaussian(ys_full_1mDa_ref, std=5)
-
-
-fig = plt.figure(num=1)
-fig.clear()
-ax = plt.axes()
-ax.plot(xs_full_1mDa_ref,ys_full_5mDa_sm_ref,label='ref')
-ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='dat')
-
-
-
-
-
-# Perform linear calibration over known peaks
-#                            calib anal  N      Ga  Da
-pk_data =   np.array(    [  (1,    0,    0,     0,  ed['H'].isotopes[1][0]),
-                            (0,    1,    1,     0,  ed['N'].isotopes[14][0]/2),
-                            (1,    1,    1,     0,  ed['N'].isotopes[14][0]/1),
-                            (0,    1,    1,     0,  ed['N'].isotopes[15][0]/1),
-                            (0,    1,    0,     1,  ed['Ga'].isotopes[69][0]/3),
-                            (0,    1,    0,     1,  ed['Ga'].isotopes[71][0]/3),
-                            (1,    1,    2,     0,  ed['N'].isotopes[14][0]*2),
-                            (0,    1,    2,     0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]),
-                            (1,    1,    0,     1,  ed['Ga'].isotopes[69][0]/2),
-                            (1,    1,    0,     1,  ed['Ga'].isotopes[71][0]/2),
-                            (0,    1,    1,     1,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[69][0])/2),
-                            (0,    1,    3,     0,  ed['N'].isotopes[14][0]*3),
-                            (0,    1,    1,     1,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[71][0])/2),
-                            (1,    1,    0,     1,  ed['Ga'].isotopes[69][0]),
-                            (1,    1,    0,     1,  ed['Ga'].isotopes[71][0])],
-                            dtype=[('is_cal_pk','?'), 
-                                   ('is_anal_pk','?'),
-                                   ('N_at_ct','i4'), 
+#                            N      Ga  Da
+pk_data =   np.array(    [  (1,     0,  ed['N'].isotopes[14][0]/2),
+                            (1,     0,  ed['N'].isotopes[14][0]/1),
+                            (1,     0,  ed['N'].isotopes[15][0]/1),
+                            (0,     1,  ed['Ga'].isotopes[69][0]/3),
+                            (0,     1,  ed['Ga'].isotopes[71][0]/3),
+                            (2,     0,  ed['N'].isotopes[14][0]*2),
+                            (2,     0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]),
+                            (0,     1,  ed['Ga'].isotopes[69][0]/2),
+                            (0,     1,  ed['Ga'].isotopes[71][0]/2),
+                            (1,     1,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[69][0])/2),
+                            (3,     0,  ed['N'].isotopes[14][0]*3),
+                            (1,     1,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[71][0])/2),
+                            (0,     1,  ed['Ga'].isotopes[69][0]),
+                            (0,     1,  ed['Ga'].isotopes[71][0])],
+                            dtype=[('N_at_ct','i4'), 
                                    ('Ga_at_ct','i4'),
                                    ('m2q','f4')] )
 
-
-
-ref_pk_m2qs = pk_data['m2q'][pk_data['is_cal_pk']]
-m2q_corr = m2q_calib.calibrate_m2q_by_peak_location(m2q_corr,ref_pk_m2qs)
-          
-pk_params = np.zeros(np.sum(pk_data['is_anal_pk']),dtype=[('x0','f4'),
-                                                  ('std_fit','f4'),
-                                                  ('std_smooth','f4'),
-                                                  ('off','f4'),
-                                                  ('amp','f4'),
-                                                  ('pre_rng','f4'),
-                                                  ('post_rng','f4'),
-                                                  ('pre_bg','f4'),
-                                                  ('post_bg','f4')])
-pk_params['x0'] = pk_data['m2q'][pk_data['is_anal_pk']]
-
-pk_params['pre_rng'] = -1
-pk_params['post_rng'] = -1
+# Initialize a peak paramter array
+pk_params = np.full(pk_data.size,-1,dtype=[('x0','f4'),
+                                            ('std_fit','f4'),
+                                            ('std_smooth','f4'),
+                                            ('off','f4'),
+                                            ('amp','f4'),
+                                            ('pre_rng','f4'),
+                                            ('post_rng','f4'),
+                                            ('pre_bg','f4'),
+                                            ('post_bg','f4')])
+pk_params['x0'] = pk_data['m2q']
 
 full_roi = np.array([0, 100])
 xs_full_1mDa, ys_full_1mDa = bin_dat(m2q_corr,user_roi=full_roi,isBinAligned=True)

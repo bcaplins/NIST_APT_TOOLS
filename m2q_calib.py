@@ -12,7 +12,7 @@ from scipy.optimize import minimize
 import peak_param_determination as ppd
 
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 def align_m2q_to_ref_m2q(ref_m2q,tof):
