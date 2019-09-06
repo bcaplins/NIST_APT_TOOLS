@@ -64,7 +64,7 @@ def align_m2q_to_ref_m2q(ref_m2q,tof):
     c = com_ref/com    
     
     print("c_guess = "+str(c))
-#    c = 1.39325423*1e-4
+    c = 1.39325423*1e-4
 
 
 

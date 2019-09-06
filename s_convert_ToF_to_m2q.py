@@ -28,7 +28,12 @@ ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #ref_epos = ref_epos[0:ref_epos.size//2]
 
 # Read in data
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
+
 epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[epos.size//2:-1]
 

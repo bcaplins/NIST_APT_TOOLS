@@ -16,7 +16,183 @@ from scipy.optimize import minimize
 
 import matplotlib.pyplot as plt
 
+def do_composition(pk_data,cts):
+    
+    stoich = np.c_[pk_data['N_at_ct'][:,None],pk_data['Ga_at_ct'][:,None]]
+    
+    tot_cts = cts['total'][:,None]
+    pk_cts_loc = cts['total'][:,None]-cts['local_bg'][:,None]
+    pk_cts_glob = cts['total'][:,None]-cts['global_bg'][:,None]
 
+    
+    glob_res = np.sum(stoich*pk_cts_glob,axis=0)
+    glob_stoich = glob_res/np.sum(glob_res)
+        
+    loc_res = np.sum(stoich*pk_cts_loc,axis=0)
+    loc_stoich = loc_res/np.sum(loc_res)
+    
+    tot_res = np.sum(stoich*tot_cts,axis=0)
+    tot_stoich = tot_res/np.sum(tot_res)
+
+
+    return (tot_stoich, loc_stoich, glob_stoich)
+
+
+def do_counting(epos, pk_params, glob_bg_param):
+    
+    xs, _ = bin_dat(epos['m2q'],user_roi=[0,100],isBinAligned=True)
+    
+    glob_bg = physics_bg(xs,glob_bg_param)    
+
+    
+    cts = np.full(pk_params.size,-1,dtype=[('total','f4'),
+                                            ('local_bg','f4'),
+                                            ('global_bg','f4')])
+    
+    
+    
+        
+    for idx,pk_param in enumerate(pk_params):
+        
+        pk_rng = [pk_param['pre_rng'],pk_param['post_rng']]
+        
+        local_bg_cts = pk_param['loc_bg']*(pk_rng[1]-pk_rng[0])/0.001
+        global_bg_cts = np.sum(glob_bg[(xs>=pk_rng[0]) & (xs<=pk_rng[1])])
+        tot_cts = np.sum((epos['m2q']>=pk_rng[0]) & (epos['m2q']<=pk_rng[1]))
+        
+        cts['total'][idx] = tot_cts
+        cts['local_bg'][idx] = local_bg_cts
+        cts['global_bg'][idx] = global_bg_cts
+        
+    
+
+    return cts 
+
+def get_peak_ranges(epos, peak_m2qs):
+    
+    PK_FRAC = 0.1
+    
+    # Initialize a peak paramter array
+    pk_params = np.full(peak_m2qs.size,-1,dtype=[('x0','f4'),
+                                                ('std_fit','f4'),
+                                                ('std_smooth','f4'),
+                                                ('off','f4'),
+                                                ('amp','f4'),
+                                                ('pre_rng','f4'),
+                                                ('post_rng','f4'),
+                                                ('pre_bg_rng','f4'),
+                                                ('post_bg_rng','f4'),
+                                                ('loc_bg','f4')])
+    pk_params['x0'] = peak_m2qs
+    
+    full_roi = np.array([0, 100])
+    xs_full_1mDa, ys_full_1mDa = bin_dat(epos['m2q'],user_roi=full_roi,isBinAligned=True)
+    ys_full_5mDa_sm = do_smooth_with_gaussian(ys_full_1mDa, std=5)
+    
+    N_kern = 250;
+    ys_full_fwd_sm = forward_moving_average(ys_full_1mDa,n=N_kern)
+    ys_full_bwd_sm = forward_moving_average(ys_full_1mDa,n=N_kern,reverse=True)
+    
+    #ppd.do_smooth_with_gaussian(ys_full_1mDa, std=100)
+    #
+    #ys_fwd = np.roll(ys_full_50mDa_sm,50)
+    #ys_bwd = np.roll(ys_full_50mDa_sm,-50)
+    
+    
+#    fig = plt.figure(num=222)
+#    fig.clear()
+#    ax = plt.axes()
+#    
+#    ax.plot(xs_full_1mDa,ys_full_1mDa,label='1 mDa bin')    
+#    ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='5 mDa smooth')    
+#    
+#    ax.grid('major')
+    
+    # Get estiamtes for x0, amp, std_fit
+    for idx,pk_param in enumerate(pk_params):
+        # Select peak roi
+        roi_half_wid = 0.25
+        pk_roi = np.array([-roi_half_wid, roi_half_wid])+pk_param['x0']
+        pk_dat = epos['m2q'][(epos['m2q']>pk_roi[0]) & (epos['m2q']<pk_roi[1])]
+        
+        # Fit to gaussian
+        smooth_param = 5
+        popt = fit_to_g_off(pk_dat,user_std=smooth_param)
+        pk_param['amp'] = popt[0]
+        pk_param['x0'] = popt[1]
+        pk_param['std_fit'] = popt[2]
+        pk_param['off'] = popt[3]
+        
+        
+        
+        pk_param['x0'] = mean_shift_peak_location(pk_dat,user_std=pk_param['std_fit'],user_x0=pk_param['x0'])
+        
+        ax = plt.gca()
+        ax.plot(np.array([1,1])*pk_param['x0'],np.array([0, pk_param['amp']+pk_param['off']]),'k--')
+        
+        plt.pause(0.001)
+    #    plt.pause(2)
+    
+        # select starting locations
+        pk_idx = np.argmin(np.abs(pk_param['x0']-xs_full_1mDa))
+        pk_lhs_idx = np.argmin(np.abs((pk_param['x0']-pk_param['std_fit'])-xs_full_1mDa))    
+        pk_rhs_idx = np.argmin(np.abs((pk_param['x0']+pk_param['std_fit'])-xs_full_1mDa))
+        
+        pk_amp = (pk_param['amp']+ys_full_5mDa_sm[pk_idx])/2
+        
+        curr_val = ys_full_5mDa_sm[pk_idx]
+        
+        for i in np.arange(pk_lhs_idx,-1,-1):
+            curr_val = ys_full_5mDa_sm[i]        
+                
+            if (curr_val<PK_FRAC*pk_amp) and (pk_param['pre_rng']<0):
+                # This is a range limit
+                pk_param['pre_rng'] = xs_full_1mDa[i]
+            
+            if curr_val<ys_full_bwd_sm[i]:
+                # Assume we are at the prepeak baseline noise
+                if pk_param['pre_rng']<0:
+                    pk_param['pre_rng'] = xs_full_1mDa[i]
+                pk_param['pre_bg_rng'] = xs_full_1mDa[i]
+                break
+            
+        curr_val = ys_full_5mDa_sm[pk_idx]
+        for i in np.arange(pk_rhs_idx,xs_full_1mDa.size):
+            curr_val = ys_full_5mDa_sm[i]        
+                
+            if (curr_val<PK_FRAC*pk_amp) and (pk_param['post_rng']<0):
+                # This is a range limit
+                pk_param['post_rng'] = xs_full_1mDa[i]
+            
+            if curr_val<ys_full_fwd_sm[i]:
+                # Assume we are at the prepeak baseline noise
+                if pk_param['post_rng']<0:
+                    pk_param['post_rng'] = xs_full_1mDa[i]
+                pk_param['post_bg_rng'] = xs_full_1mDa[i]
+                break      
+        
+        pre_pk_rng = [pk_param['pre_bg_rng']-0.22,pk_param['pre_bg_rng']-0.02]
+        pk_param['loc_bg'] = np.sum((epos['m2q']>=pre_pk_rng[0]) & (epos['m2q']<=pre_pk_rng[1]))*0.001/(pre_pk_rng[1]-pre_pk_rng[0])
+
+        
+#        ax.plot(np.array([1,1])*pk_param['pre_rng'] ,np.array([0,1])*(pk_param['amp']+pk_param['off']),'k--')
+#        ax.plot(np.array([1,1])*pk_param['post_rng'] ,np.array([0,1])*(pk_param['amp']+pk_param['off']),'k--')
+#    #    ax.plot(np.array([1,1])*(pk_param['x0']+1*pk_param['std_fit'])   ,np.array([np.min(ys_smoothed),np.max(ys_smoothed)]),'k--')
+#    #    ax.plot(np.array([1,1])*(pk_param['x0']+5*pk_param['std_fit']),np.array([np.min(ys_smoothed),np.max(ys_smoothed)]),'k--')
+#        plt.pause(0.1)
+    
+#    ax.clear()
+#    ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='5 mDa smooth')    
+#    for idx,pk_param in enumerate(pk_params):
+#        ax.plot(np.array([1,1])*pk_param['pre_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'k--')
+#        ax.plot(np.array([1,1])*pk_param['post_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'k--')
+#        ax.plot(np.array([1,1])*pk_param['pre_bg_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'r--')
+#        ax.plot(np.array([1,1])*pk_param['post_bg_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'r--')
+#    
+#    ax.set_yscale('log')
+#    ax.set(ylim=[0.1,1000])
+    
+    return pk_params
 
 def b_G(x,sigma,x0):
     return np.exp(-np.square(x-x0)/(2*np.square(sigma)))
@@ -85,7 +261,7 @@ def est_hwhm(dat):
 def physics_bg(xs,alpha):
     return alpha*np.reciprocal(np.sqrt(xs+0.1))
 
-def fit_uncorr_bg(dat,fit_roi=[3,6]):
+def fit_uncorr_bg(dat,fit_roi=[3.5,6.5]):
 
     xs_full, ys_full = bin_dat(dat,user_roi=[0,100],isBinAligned=True)
     
@@ -108,15 +284,15 @@ def fit_uncorr_bg(dat,fit_roi=[3,6]):
                    options=opts,
                    method='Nelder-Mead')  
     
-    mod_bg = physics_bg(xs_full,res.x)
-        
-    fig = plt.figure(num=1299)
-    fig.clear()
-    ax = plt.axes()
-    
-    
-    ax.plot(xs_full,mod_bg)
-    
+#    mod_bg = physics_bg(xs_full,res.x)
+#        
+#    fig = plt.figure(num=1299)
+#    fig.clear()
+#    ax = plt.axes()
+#    
+#    
+#    ax.plot(xs_full,mod_bg)
+#    
     return res.x
     
     
@@ -129,7 +305,7 @@ def pk_mod_fun(x,amp,x0,sigma,b):
 
 def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
     
-    if dat.size<256:
+    if dat.size<32:
         raise Exception('NEED MORE COUNTS IN PEAK')
 
     
@@ -189,35 +365,38 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
 #                   bounds=bnds,
                    method='Nelder-Mead')  
 
+    if res.x[1]<np.percentile(xs,10) or res.x[1]>np.percentile(xs,90):
+        res.x = p_guess
 
-    print(res.x)
+
+    print(np.abs(res.x))
     
     
 #    popt2 = least_squares(resid_func, x0=p0, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
 #    curve_fit(pk_mod_fun, xs, ys_smoothed, p0=p0)
     
 #    popt = least_squares(resid_func, p0, verbose=0, ftol=1e-12, max_nfev=2048)
-
-    fig = plt.figure(num=999)
-    fig.clear()
-    ax = plt.axes()
-    
-    ax.plot(xs,ys,'.',label='raw')
-    ax.plot(xs,ys_smoothed,label='smoothed')
-    
-    mod_y = pk_mod_fun(xs,*p_guess)
-    ax.plot(xs,mod_y,label='guess')
-    
-    
-    mod_y = pk_mod_fun(xs,*res.x)
-    
-    ax.plot(xs,mod_y,label='fit')
-    
-    ax.legend()
-    
-    
-    
-    plt.pause(.001)
+#
+#    fig = plt.figure(num=999)
+#    fig.clear()
+#    ax = plt.axes()
+#    
+#    ax.plot(xs,ys,'.',label='raw')
+#    ax.plot(xs,ys_smoothed,label='smoothed')
+#    
+#    mod_y = pk_mod_fun(xs,*p_guess)
+#    ax.plot(xs,mod_y,label='guess')
+#    
+#    
+#    mod_y = pk_mod_fun(xs,*res.x)
+#    
+#    ax.plot(xs,mod_y,label='fit')
+#    
+#    ax.legend()
+#    
+#    
+#    
+#    plt.pause(.001)
 #
 #    # Find halfway down and up each side
 #    max_idx = np.argmax(N)
@@ -233,7 +412,7 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
 #
 #
 
-    return res.x
+    return np.abs(res.x)
 
 
 def est_hwhm2(dat):
@@ -382,7 +561,7 @@ def mean_shift_peak_location(dat,user_std=-1,user_x0=-1):
     else:
         popt = fit_to_g_off(dat,user_std=5)
         #amp_g,x0,sigma,b
-        hwhm = np.sqrt(2*np.log(2))*popt[2]
+        hwhm = np.max([np.sqrt(2*np.log(2))*popt[2], 0.005])
 #        hwhm = est_hwhm2(dat)
     
     prev_est = np.inf
@@ -391,12 +570,28 @@ def mean_shift_peak_location(dat,user_std=-1,user_x0=-1):
         curr_est = user_x0
     else:
         curr_est = np.mean(dat)
+        
+            
+
     
+    prev_est = 1e9
     loop_count = 0
     while np.abs(curr_est-prev_est)/curr_est >= 1e-6:
         loop_count += 1
         prev_est = curr_est
-        curr_est = np.mean(dat[(dat>curr_est-hwhm) & (dat<curr_est+hwhm)])
+#        print('curr_est: '+str(curr_est))
+#        print('hwhm: '+str(hwhm))
+        idxs = np.where((dat>curr_est-hwhm) & (dat<curr_est+hwhm))[0]
+        if(idxs.size==0):
+            print('ERRROOR')
+            print('curr_est = '+str(curr_est))
+            print('prev_est = '+str(prev_est))
+            print('hwhm = '+str(hwhm))
+            print(dat)
+        curr_est = np.mean(dat[idxs])
+        
+        
+        
         
         if loop_count>64:
             print('Exiting mean shift after 64 iterations (before convergence)')
