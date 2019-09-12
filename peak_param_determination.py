@@ -11,6 +11,7 @@ from scipy.signal.windows import gaussian
 from histogram_functions import bin_dat
 from scipy.optimize import least_squares
 from scipy.optimize import minimize
+from constrNMPy import constrNM
 
 #from scipy.optimize import curve_fit
 
@@ -302,7 +303,6 @@ def pk_mod_fun(x,amp,x0,sigma,b):
         
 
 
-
 def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
     
     if dat.size<32:
@@ -336,7 +336,7 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
         p0 = user_p0    
         
     # b_model2(x,amp_g,x0,sigma,b):
-    lbs = np.array([0,       np.percentile(xs,10),  0.007,   0])
+    lbs = np.array([0,       np.percentile(xs,10),  0.005,   0])
     ubs = np.array([2*p0[0],  np.percentile(xs,90), 0.10,   p0[0]])
 
     # Force in bounds
@@ -347,29 +347,35 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
 #    popt2, pcov =  = curve_fit(pk_mod_fun, xs, ys_smoothed)
     
     
-    bnds = ((0,2*p0[0]),
-            (np.percentile(xs,10),np.percentile(xs,90)),
-             (0.007,0.1),
-             (0,p0[0]))
+#    bnds = ((0,2*p0[0]),
+#            (np.percentile(xs,10),np.percentile(xs,90)),
+#             (0.007,0.1),
+#             (0,p0[0]))
+#    
+
+#    opts = {'xatol' : 1e-5,
+#            'fatol' : 1e-12,
+#             'maxiter' : 1024,
+#             'maxfev' : 1024,
+#             'disp' : True}
     
-
-    opts = {'xatol' : 1e-5,
-            'fatol' : 1e-12,
-             'maxiter' : 1024,
-             'maxfev' : 1024,
-             'disp' : True}
     
-    res = minimize(opt_fun, 
-                   p_guess,
-                   options=opts,
-#                   bounds=bnds,
-                   method='Nelder-Mead')  
+    ret_dict = constrNM(opt_fun,p_guess,lbs,ubs,xtol=1e-5, ftol=1e-12, maxiter=1024, maxfun=1024, full_output=1, disp=1)
+    
+    print(p_guess)
+    print(ret_dict['xopt'])
+    
+#    res = minimize(opt_fun, 
+#                   p_guess,
+#                   options=opts,
+##                   bounds=bnds,
+#                   method='Nelder-Mead')  
+#
+#    if res.x[1]<np.percentile(xs,10) or res.x[1]>np.percentile(xs,90):
+#        res.x = p_guess
 
-    if res.x[1]<np.percentile(xs,10) or res.x[1]>np.percentile(xs,90):
-        res.x = p_guess
 
-
-    print(np.abs(res.x))
+#    print(np.abs(res.x))
     
     
 #    popt2 = least_squares(resid_func, x0=p0, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
@@ -411,8 +417,8 @@ def fit_to_g_off(dat, user_std=-1, user_p0=np.array([])):
 #    hwhm_est = (x[rhs_idx]-x[lhs_idx])/2
 #
 #
-
-    return np.abs(res.x)
+    return np.abs(ret_dict['xopt'])
+#    return np.abs(res.x)
 
 
 def est_hwhm2(dat):
