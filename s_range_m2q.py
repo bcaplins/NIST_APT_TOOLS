@@ -19,18 +19,18 @@ import peak_param_determination as ppd
 from histogram_functions import bin_dat
 
 # Read in data
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
 new_fn = fn[:-5]+'_vbm_corr.epos'
 epos = apt_fileio.read_epos_numpy(new_fn)
 #epos = epos[epos.size//2:-1]
 
 # Plot m2q vs event index and show the current ROI selection
-#roi_event_idxs = np.arange(1000,epos.size-1000)
-roi_event_idxs = np.arange(epos.size)
+roi_event_idxs = np.arange(1000,epos.size-1000)
+#roi_event_idxs = np.arange(epos.size)
 ax = plotting_stuff.plot_m2q_vs_time(epos['m2q'],epos,1)
 ax.plot(roi_event_idxs[0]*np.ones(2),[0,1200],'--k')
 ax.plot(roi_event_idxs[-1]*np.ones(2),[0,1200],'--k')
