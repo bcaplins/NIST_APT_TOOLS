@@ -37,7 +37,7 @@ def get_shifts(ref,N,max_shift=150):
     shifts = shifts - np.mean(shifts)
     return shifts
 
-def create_histogram(lys,cts_per_slice=2**10,y_roi=None,delta_ly=1e-3):
+def create_histogram(lys,cts_per_slice=2**10,y_roi=None,delta_ly=3.2e-3):
     if y_roi is None:
         y_roi = [0.5, 200]
     ly_roi = np.log(y_roi)
@@ -59,15 +59,15 @@ def edges_to_centers(*edges):
         centers.append((es[0:-1]+es[1:])/2)
     return centers
 
-def get_all_scale_coeffs(epos,max_scale = 1.05,m2q_roi=None):
-    if m2q_roi is None:
+def get_all_scale_coeffs(epos,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
+    if m2q_roi is None:        
         m2q_roi = [0.5,200]
     
     # Take the log of m2q data
     lys = np.log(epos['m2q'])
     
     # Create the histgram.  Compute centers and delta y
-    N,x_edges,ly_edges = create_histogram(lys,y_roi=m2q_roi)
+    N,x_edges,ly_edges = create_histogram(lys,y_roi=m2q_roi,cts_per_slice=cts_per_slice)
     x_centers,ly_centers = edges_to_centers(x_edges,ly_edges)
     delta_ly = ly_edges[1]-ly_edges[0]
     
@@ -90,13 +90,14 @@ def get_all_scale_coeffs(epos,max_scale = 1.05,m2q_roi=None):
     lys_corr = lys - pointwise_ly_shifts
 
     # Recompute the histogram 
-    N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi)
+    N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi,cts_per_slice=cts_per_slice)
     x_centers,ly_centers = edges_to_centers(x_edges,ly_edges)
     delta_ly = ly_edges[1]-ly_edges[0]
 
     # Use the center half of the data as the new reference (log) spectrum
     ref = np.mean(N[N.shape[0]//4:3*N.shape[0]//4,:],axis=0)[None,:]
-    
+    ref = np.mean(N[N.shape[0]//2-10:N.shape[0]//2+11,:],axis=0)[None,:]
+
     # Get the piecewise shifts
     max_pixel_shift = int(np.ceil(np.log(max_scale)/delta_ly))
     shifts1 = get_shifts(ref,N,max_shift=max_pixel_shift)*delta_ly
@@ -119,7 +120,8 @@ plt.close('all')
 # Load data
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_00504-v56.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbm_corr.epos"
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_04472-v03.epos"
+#fn = r"D:\Users\clifford\Documents\Python Scripts\NIST_DATA\R20_07094-v03.epos"
+fn = r"D:\Users\clifford\Documents\Python Scripts\NIST_DATA\R45_04472-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07263-v02.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07080-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07086-v01.epos"
@@ -129,10 +131,14 @@ epos = apt_fileio.read_epos_numpy(fn)
 #plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,1,clearFigure=True,user_ylim=[0,150])
 
 
-m2q_roi = [0.5,100]
+cts_per_slice=2**7
+m2q_roi = [0.8,70]
 import time
 t_start = time.time()
-pointwise_scales,piecewise_scales = get_all_scale_coeffs(epos,m2q_roi=m2q_roi)
+pointwise_scales,piecewise_scales = get_all_scale_coeffs(epos,
+                                                         m2q_roi=m2q_roi,
+                                                         cts_per_slice=cts_per_slice,
+                                                         max_scale=1.15)
 t_end = time.time()
 print('Total Time = ',t_end-t_start)
 
@@ -140,7 +146,7 @@ print('Total Time = ',t_end-t_start)
 
 
 lys_corr = np.log(epos['m2q'])-np.log(pointwise_scales)
-N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi)
+N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi,cts_per_slice=cts_per_slice)
 
 # Plot histogram
 fig = plt.figure(figsize=(8,8))
@@ -157,11 +163,12 @@ ax = fig.gca()
 ax.plot(piecewise_scales,'o-')
 
 m2q_corr = epos['m2q']/pointwise_scales
-plotting_stuff.plot_TOF_vs_time(m2q_corr,epos,111,clearFigure=True,user_ylim=[0,150])
+plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,111,clearFigure=True,user_ylim=[0,150])
+plotting_stuff.plot_TOF_vs_time(m2q_corr,epos,222,clearFigure=True,user_ylim=[0,150])
 
 
-plotting_stuff.plot_histo(m2q_corr,222,user_xlim=[0, 200])
-plotting_stuff.plot_histo(epos['m2q'],222,user_xlim=[0, 200],clearFigure=False)
+plotting_stuff.plot_histo(m2q_corr,333,user_xlim=[0, 200])
+plotting_stuff.plot_histo(epos['m2q'],333,user_xlim=[0, 200],clearFigure=False)
 #
 #
 #dsc = np.r_[np.diff(scales_short),0]
