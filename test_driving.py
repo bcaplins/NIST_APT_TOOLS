@@ -12,7 +12,7 @@ import time
 
 t_i = time.time()
 
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+fn = r"D:\Users\clifford\Documents\Python Scripts\NIST_DATA\R20_07094-v03.epos"
 epos = apt.read_epos_numpy(fn)
 wall_time = np.cumsum(epos['pslep'])/10000.0
 pulse_idx = np.arange(0,epos.size)
