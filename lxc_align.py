@@ -23,12 +23,12 @@ plt.close('all')
 # Load data
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_00504-v56.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbm_corr.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_04472-v03.epos"
+fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_04472-v03.epos"
 
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07263-v02.epos"
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07080-v01.epos"
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07086-v01.epos"
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07276-v03.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07263-v02.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07080-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07086-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07276-v03.epos"
 
 
 epos = apt_fileio.read_epos_numpy(fn)
@@ -36,12 +36,12 @@ plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,1,clearFigure=True,user_ylim=[0
 
 # Create histogram
 
-cts_per_histo = 1024
+cts_per_histo = 2**10
 nx = int(epos.size/cts_per_histo)
 xs = np.arange(epos.size)
 
-y_roi = np.log10(np.array([0.5, 170]))
-ny = 5000
+y_roi = np.log10(np.array([0.5, 200]))
+ny = 2**12
 ys = np.log10(epos['m2q'])
 
 N,x_edges,y_edges = np.histogram2d(xs,ys,bins=[nx,ny],range=[[1,epos.size],y_roi],density=False)
@@ -137,23 +137,23 @@ plotting_stuff.plot_TOF_vs_time(m2q_corr,epos,111,clearFigure=True,user_ylim=[0,
 plotting_stuff.plot_histo(m2q_corr,222,user_xlim=[0, 200])
 plotting_stuff.plot_histo(epos['m2q'],222,user_xlim=[0, 200],clearFigure=False)
 
-
-dsc = np.r_[np.diff(scales_short),0]
-fig = plt.figure(figsize=(8,8))
-ax = fig.gca()
-ax.plot(dsc)
-
-fig = plt.figure(figsize=(8,8))
-ax = fig.gca()
-
-ax.hist(dsc,bins=512,range=[-0.01,0.01])
-dsc_cut = scipy.stats.trimboth(dsc,0.025)
-
-outlier_lims = [np.mean(dsc_cut)-5*np.std(dsc_cut), np.mean(dsc_cut)-5*np.std(dsc_cut)]
-
-for i in np.arange(dsc.size):
-    isBad = (dsc[i]<=outlier_lims[0]) | (dsc[i]>=outlier_lims[1])
-    if isBad:
-        N[i,:] = 0
-
+#
+#dsc = np.r_[np.diff(scales_short),0]
+#fig = plt.figure(figsize=(8,8))
+#ax = fig.gca()
+#ax.plot(dsc)
+#
+#fig = plt.figure(figsize=(8,8))
+#ax = fig.gca()
+#
+#ax.hist(dsc,bins=512,range=[-0.01,0.01])
+#dsc_cut = scipy.stats.trimboth(dsc,0.025)
+#
+#outlier_lims = [np.mean(dsc_cut)-5*np.std(dsc_cut), np.mean(dsc_cut)-5*np.std(dsc_cut)]
+#
+#for i in np.arange(dsc.size):
+#    isBad = (dsc[i]<=outlier_lims[0]) | (dsc[i]>=outlier_lims[1])
+#    if isBad:
+#        N[i,:] = 0
+#
 
