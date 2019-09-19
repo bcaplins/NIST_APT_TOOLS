@@ -19,14 +19,12 @@ import peak_param_determination as ppd
 from histogram_functions import bin_dat
 
 # Read in data
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
-#fn = r'Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbmq_corr.epos'
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07263-v02.epos" # 25 K
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07080-v01.epos" # 50 K
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07086-v01.epos" # 125 K
+fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07276-v03.epos" # 150 K
 
-fn = fn[:-5]+'_vbm_corr.epos'
+fn = fn[:-5]+'_vbmq_corr.epos'
 epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[epos.size//2:-1]
 
@@ -47,44 +45,54 @@ isSingle = np.nonzero(epos['ipp'] == 1)
 
 # Define peaks to range
 ed = initElements_P3.initElements()
-#                            N      Ga  Da
+#                            Si     O  Da
 # Define possible peaks
 
-pk_data =   np.array(    [  (1,     0,      0,  ed['N'].isotopes[14][0]/2),
-                            (1,     0,      0,  ed['N'].isotopes[14][0]/1),
-                            (1,     0,      0,  ed['N'].isotopes[15][0]/1),
-                            (1,     0,      0,  ed['N'].isotopes[15][0]+ed['H'].isotopes[1][0]),
-                            (0,     1,      0,  ed['Ga'].isotopes[69][0]/3),
-                            (0,     1,      0,  ed['Ga'].isotopes[71][0]/3),
-                            (2,     0,      0,  ed['N'].isotopes[14][0]*2),
-                            (2,     0,      0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]),
-                            (2,     0,      0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]+ed['H'].isotopes[1][0]),
-                            (0,     1,      0,  ed['Ga'].isotopes[69][0]/2),
-                            (0,     1,      0,  ed['Ga'].isotopes[71][0]/2),
-                            (1,     1,      0,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[69][0])/2),
-                            (3,     0,      0,  ed['N'].isotopes[14][0]*3),
-                            (1,     1,      0,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[71][0])/2),
-                            (3,     1,      0,  (ed['Ga'].isotopes[69][0]+3*ed['N'].isotopes[14][0])/2),
-                            (3,     1,      0,  (ed['Ga'].isotopes[71][0]+3*ed['N'].isotopes[14][0])/2),
-                            (0,     1,      0,  ed['Ga'].isotopes[69][0]),
-                            (0,     1,      0,  ed['Ga'].isotopes[71][0]),
-                            (0,     1,      0,  ed['Ga'].isotopes[71][0]+ed['H'].isotopes[1][0]),
-                            (0,     0,      1,  ed['Mg'].isotopes[24][0]/2)
+## Oxygen def
+#pk_data =   np.array(    [  (1,     0,      ed['Si'].isotopes[28][0]/3),
+#                            (1,     0,      ed['Si'].isotopes[28][0]/2),
+#                            (1,     0,      ed['Si'].isotopes[29][0]/2),
+#                            (1,     0,      ed['Si'].isotopes[30][0]/2),
+#                            (0,     1,      ed['O'].isotopes[16][0]/1),
+#                            (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/2),
+#                            (2,     0,      (2*ed['Si'].isotopes[28][0])/2),
+#                            (2,     0,      28.7),
+#                            (2,     0,      (2*ed['Si'].isotopes[29][0]+2*ed['H'].isotopes[1][0])/2),
+#                            (0,     2,      (2*ed['O'].isotopes[16][0])/1),
+#                            (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])),
+#                            (1,     1,      (ed['Si'].isotopes[29][0]+ed['O'].isotopes[16][0])),
+#                            (1,     1,      (ed['Si'].isotopes[30][0]+ed['O'].isotopes[16][0])),
+#                            (2,     0,      (2*ed['Si'].isotopes[28][0]+4*ed['H'].isotopes[1][0])),
+#                            (2,     0,      (ed['Si'].isotopes[28][0]+ed['Si'].isotopes[29][0]+4*ed['H'].isotopes[1][0])),
+#                            (2,     0,      (ed['Si'].isotopes[28][0]+ed['Si'].isotopes[30][0]+4*ed['H'].isotopes[1][0]))
+#                            ],
+#                            dtype=[('Si','i4'),('O','i4'),('m2q','f4')] )
+
+# Oxygen rich
+pk_data =   np.array(    [  (1,     0,      ed['Si'].isotopes[28][0]/3),
+                            (1,     0,      ed['Si'].isotopes[28][0]/2),
+                            (1,     0,      ed['Si'].isotopes[29][0]/2),
+                            (1,     0,      ed['Si'].isotopes[30][0]/2),
+                            (0,     1,      ed['O'].isotopes[16][0]/1),
+                            (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/2),
+                            (1,     0,      (2*ed['Si'].isotopes[28][0])/2),
+                            (1,     0,      28.7),
+                            (1,     2,      (2*ed['Si'].isotopes[29][0]+2*ed['H'].isotopes[1][0])/2),
+                            (0,     2,      (2*ed['O'].isotopes[16][0])/1),
+                            (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])),
+                            (1,     1,      (ed['Si'].isotopes[29][0]+ed['O'].isotopes[16][0])),
+                            (1,     1,      (ed['Si'].isotopes[30][0]+ed['O'].isotopes[16][0])),
+                            (1,     2,      (2*ed['Si'].isotopes[28][0]+4*ed['H'].isotopes[1][0])),
+                            (1,     2,      (ed['Si'].isotopes[28][0]+ed['Si'].isotopes[29][0]+4*ed['H'].isotopes[1][0])),
+                            (1,     2,      (ed['Si'].isotopes[28][0]+ed['Si'].isotopes[30][0]+4*ed['H'].isotopes[1][0]))
                             ],
-                            dtype=[('N','i4'),('Ga','i4'),('Mg','i4'),('m2q','f4')] )
-
-# Define which peaks to use for CSR calcs
-Ga1p_m2qs = [ed['Ga'].isotopes[69][0], ed['Ga'].isotopes[71][0]]
-Ga2p_m2qs = [ed['Ga'].isotopes[69][0]/2, ed['Ga'].isotopes[71][0]/2]
-
-Ga1p_idxs = [np.argmin(np.abs(m2q-pk_data['m2q'])) for m2q in Ga1p_m2qs]
-Ga2p_idxs = [np.argmin(np.abs(m2q-pk_data['m2q'])) for m2q in Ga2p_m2qs]
+                            dtype=[('Si','i4'),('O','i4'),('m2q','f4')] )
 
 # Range the peaks
 pk_params = ppd.get_peak_ranges(epos,pk_data['m2q'],peak_height_fraction=0.1)
     
 # Determine the global background
-glob_bg_param = ppd.fit_uncorr_bg(epos['m2q'])
+glob_bg_param = ppd.fit_uncorr_bg(epos['m2q'],fit_roi=[90,100])
 
 # Count the peaks, local bg, and global bg
 cts = ppd.do_counting(epos,pk_params,glob_bg_param)
@@ -96,12 +104,14 @@ S = T-B
 std_S = np.sqrt(T+B)
 # Make up a threshold for peak detection... for the most part this won't matter
 # since weak peaks don't contribute to stoichiometry much... except for Mg!
-is_peak = S>4*np.sqrt(2*B)
+is_peak = S>1*np.sqrt(2*B)
 for idx, ct in enumerate(cts):
     if not is_peak[idx]:
         for i in np.arange(len(ct)):
             ct[i] = 0
-        
+
+
+print(fn)        
 # Calculate compositions
 compositions = ppd.do_composition(pk_data,cts)
 ppd.pretty_print_compositions(compositions,pk_data)
@@ -110,10 +120,6 @@ print('Total Ranged Ions: '+str(np.sum(cts['total'])))
 print('Total Ranged Local Background Ions: '+str(np.sum(cts['local_bg'])))
 print('Total Ranged Global Background Ions: '+str(np.sum(cts['global_bg'])))
 print('Total Ions: '+str(epos.size))
-
-print('Overall CSR (no bg)    : '+str(np.sum(cts['total'][Ga2p_idxs])/np.sum(cts['total'][Ga1p_idxs])))
-print('Overall CSR (local bg) : '+str((np.sum(cts['total'][Ga2p_idxs])-np.sum(cts['local_bg'][Ga2p_idxs]))/(np.sum(cts['total'][Ga1p_idxs])-np.sum(cts['local_bg'][Ga1p_idxs]))))
-print('Overall CSR (global bg): '+str((np.sum(cts['total'][Ga2p_idxs])-np.sum(cts['global_bg'][Ga2p_idxs]))/(np.sum(cts['total'][Ga1p_idxs])-np.sum(cts['global_bg'][Ga1p_idxs]))))
 
 
 # Plot all the things

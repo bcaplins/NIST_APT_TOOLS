@@ -236,6 +236,7 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
                    method='Nelder-Mead', 
                    callback=cb)  
     
+    print(res.x)
     new_m2q = mod_physics_m2q_calibration(res.x,tof)
     
     
@@ -261,6 +262,10 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
  
 #    p_guess = np.array([res[0], t0/SCALES[1]])
     p_guess = res.x
+    if p_guess[1] > 5:
+        print('p_guess[1] > 5')
+        p_guess = np.array([c_lxc/SCALES[0], t0/SCALES[1]])
+        
 #    p_guess = np.array([c_physics/SCALES[0], t0/SCALES[1]])
 ##    
     
@@ -283,7 +288,7 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
                    options=opts,
                    method='Nelder-Mead', 
                    callback=cb)  
-    
+    print(res.x)
     new_m2q = mod_physics_m2q_calibration(res.x,tof)
     
     
@@ -304,6 +309,9 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
  
 #    p_guess = np.array([res[0], t0/SCALES[1]])
     p_guess = res.x
+    if p_guess[1] > 5:
+        print('p_guess[1] > 5')
+        p_guess = np.array([c_lxc/SCALES[0], t0/SCALES[1]])
 #    p_guess = np.array([c_physics/SCALES[0], t0/SCALES[1]])
 ##    
     
@@ -327,6 +335,7 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
                    method='Nelder-Mead', 
                    callback=cb)  
     
+    print(res.x)
     new_m2q = mod_physics_m2q_calibration(res.x,tof)
     
     
