@@ -28,14 +28,19 @@ ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #ref_epos = ref_epos[0:ref_epos.size//2]
 
 # Read in data
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\190421_AlGaN50p7_A83\R20_07208-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
+fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
+
 
 epos = apt_fileio.read_epos_numpy(fn)
-#epos = epos[epos.size//2:-1]
+#epos = epos[25000:-1]
 
 # Plot TOF vs event index and show the current ROI selection
 #roi_event_idxs = np.arange(1000,epos.size-1000)
@@ -85,9 +90,10 @@ m2q_corr2 = m2q_calib.calibrate_m2q_by_peak_location(m2q_corr,ref_pk_m2qs)
 
 # Plot the reference spectrum, (c, t0) corr spectrum and linearized spectrum
 #     to confirm that mass calibration went ok
-plotting_stuff.plot_histo(ref_epos['m2q'],4,user_label='ref')
-plotting_stuff.plot_histo(m2q_corr,4,clearFigure=False,user_label='[c,t0] corr')
-ax = plotting_stuff.plot_histo(m2q_corr2,4,clearFigure=False,user_label='linearized')
+user_xlim=[0,150]
+plotting_stuff.plot_histo(ref_epos['m2q'],4,user_label='ref',user_xlim=user_xlim)
+plotting_stuff.plot_histo(m2q_corr,4,clearFigure=False,user_label='[c,t0] corr',user_xlim=user_xlim)
+ax = plotting_stuff.plot_histo(m2q_corr2,4,clearFigure=False,user_label='linearized',user_xlim=user_xlim)
 for ref_pk_m2q in ref_pk_m2qs:
     ax.plot(ref_pk_m2q*np.ones(2),np.array([1,1e4]),'k--')
 

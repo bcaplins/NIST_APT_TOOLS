@@ -13,11 +13,8 @@ import matplotlib.pyplot as plt
 import apt_fileio
 import plotting_stuff
 
-import peak_param_determination as ppd
-
 from histogram_functions import bin_dat
 import scipy.interpolate
-import image_registration.register_images
 
 
 
@@ -26,18 +23,21 @@ def extents(f):
   return [f[0] - delta/2, f[-1] + delta/2]
 
 def get_shifts(ref,N,max_shift=150):
-    shifts = np.zeros(N.shape[0])
-    im1 = ref
-    for i in np.arange(N.shape[0]):
-        im2 = N[i:i+1,:]
-#        print(im1.shape,im2.shape)
-        dx,dy = image_registration.register_images(im1,im2,usfac=16,maxoff=max_shift)
-        shifts[i] = dx
-#        print(dx,dy)
-    shifts = shifts - np.mean(shifts)
+    
+    rfft_ref = np.fft.rfft(ref,axis=1)
+    rfft_N = np.fft.rfft(N,axis=1)
+    xc = np.fft.irfft(rfft_N*np.conj(rfft_ref),axis=1)    
+
+    xc[:,max_shift:xc.shape[1]-max_shift] = 0
+
+    max_idxs = np.argmax(xc, axis=1)
+    max_idxs[max_idxs>xc.shape[1]//2] = max_idxs[max_idxs>xc.shape[1]//2]-xc.shape[1]
+
+    shifts = max_idxs-np.mean(max_idxs)
+    
     return shifts
 
-def create_histogram(lys,cts_per_slice=2**10,y_roi=None,delta_ly=1.6e-3):
+def create_histogram(lys,cts_per_slice=2**10,y_roi=None,delta_ly=1e-4):
     if y_roi is None:
         y_roi = [0.5, 200]
     ly_roi = np.log(y_roi)
@@ -76,7 +76,7 @@ def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
     
     # Do one iteration with the center of the data as a reference (log) spectrum
     # Note: ensure it is 2d to keep image_registration happy
-    ref = np.mean(N[N.shape[0]//2-10:N.shape[0]//2+11,:],axis=0)[None,:]
+    ref = np.mean(N[N.shape[0]//4:3*N.shape[0]//4,:],axis=0)[None,:]
     
     # Get the piecewise shifts
     max_pixel_shift = int(np.ceil(np.log(max_scale)/delta_ly))
@@ -96,7 +96,6 @@ def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
 
     # Use the center half of the data as the new reference (log) spectrum
     ref = np.mean(N[N.shape[0]//4:3*N.shape[0]//4,:],axis=0)[None,:]
-    ref = np.mean(N[N.shape[0]//2-10:N.shape[0]//2+11,:],axis=0)[None,:]
 
     # Get the piecewise shifts
     max_pixel_shift = int(np.ceil(np.log(max_scale)/delta_ly))
@@ -135,16 +134,13 @@ def __main__():
     
     
     epos = apt_fileio.read_epos_numpy(fn)
-    
-    
+        
 #    plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,1,clearFigure=True,user_ylim=[0,150])
+#    epos = epos[0:2**20]
     
-    epos = epos[0:2**20]
+    cts_per_slice=640
+    m2q_roi = [0.8,150]
     
-    cts_per_slice=2**10
-    #m2q_roi = [0.9,190]
-    m2q_roi = [0.8,80]
-#    m2q_roi = [60,100]
     import time
     t_start = time.time()
     pointwise_scales,piecewise_scales = get_all_scale_coeffs(epos['m2q'],
@@ -162,10 +158,10 @@ def __main__():
     lys_corr = np.log(epos['m2q'])-np.log(pointwise_scales)
     N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi,cts_per_slice=cts_per_slice)
     
-    fig = plt.figure(figsize=(8,8))
-    plt.imshow(np.log1p(np.transpose(N)), aspect='auto', interpolation='none',
-               extent=extents(x_edges) + extents(ly_edges), origin='lower')
-    
+#    fig = plt.figure(figsize=(8,8))
+#    plt.imshow(np.log1p(np.transpose(N)), aspect='auto', interpolation='none',
+#               extent=extents(x_edges) + extents(ly_edges), origin='lower')
+#    
     # Compute corrected data
     m2q_corr = epos['m2q']/pointwise_scales
     
@@ -173,79 +169,62 @@ def __main__():
     TEST_PEAK = 32
     ax = plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,111,clearFigure=True,user_ylim=[0,150])
     ax.plot(pointwise_scales*TEST_PEAK)
-    
     plotting_stuff.plot_TOF_vs_time(m2q_corr,epos,222,clearFigure=True,user_ylim=[0,150])
     
-    
     # Plot histograms uncorrected and corrected
-    plotting_stuff.plot_histo(m2q_corr,333,user_xlim=[0, 150])
-    plotting_stuff.plot_histo(epos['m2q'],333,user_xlim=[0, 150],clearFigure=False)
+    plotting_stuff.plot_histo(m2q_corr,333,user_xlim=[0, 150],user_bin_width=0.05)
+    plotting_stuff.plot_histo(epos['m2q'],333,user_xlim=[0, 150],clearFigure=False,user_bin_width=0.05)
+    
+#    epos['m2q'] = m2q_corr
+#    apt_fileio.write_epos_numpy(epos,'Q:\\NIST_Projects\\EUV_APT_IMS\\BWC\\GaN epos files\\R20_07148-v01_vbmq_corr.epos')
     
     
+    _, ys = bin_dat(m2q_corr,isBinAligned=True,bin_width=0.01,user_roi=[0,150])
+
+    print(np.sum(np.square(ys)))
     
-    
-    #import pandas as pd
-    #
-    #
-    #fig = plt.figure(figsize=(8,8))
-    #ax = fig.gca()
-    #
-    #df = pd.read_csv(r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_04472_LaserPositionHist.csv")
-    #ax.plot(df['Ion Sequence Number'],df['Laser X Position (mic)'])
-    #ax.plot(df['Ion Sequence Number'],df['Laser Y Position (mic)'])
-    #ax.plot(df['Ion Sequence Number'],df['Laser Z Position (mic)'])
-    #
-    #ax.clear()
-    #ax.plot(pointwise_scales)
-    #ax.grid()
-    #ax.plot(np.convolve(np.diff(epos['v_dc']),np.ones(101)/101,mode='same')+1)
-    ##ax.plot(np.convolve(np.diff(epos['v_dc']),np.ones(1)/1,mode='same')+1)
-    
-    
-    #
-    #
-    #wall_time = np.cumsum(epos['pslep'])/500000.0
-    #
-    #dt = ppd.moving_average(np.diff(wall_time),n=512)
-    #ra = 1/dt
-    #
-    #fig = plt.figure(figsize=(8,8))
-    #ax = fig.gca()
-    #ax.plot(ra)
-    #
-    #dsc_pointwise = np.r_[np.diff(pointwise_scales),0]
-    #
-    ##ax.plot(dsc_pointwise*10000000)
-    #
-    #ax.plot((pointwise_scales-1)*100000/3)
-    #
-    #ax.plot((pointwise_scales-1)*100/3)
-    #
-    #
-    #fig = plt.gcf()
-    #ax = fig.gca()
-    
-    
-    
-    #
-    
-    dsc = np.r_[np.diff(piecewise_scales),0]
-    #fig = plt.figure(figsize=(8,8))
-    #ax = fig.gca()
-    #ax.plot(dsc)
-    
-    #fig = plt.figure(figsize=(8,8))
-    #ax = fig.gca()
-    
-    ax.hist(dsc,bins=64,range=[-0.01,0.01])
-    dsc_cut = scipy.stats.trimboth(dsc,0.025)
-    
-    outlier_lims = [np.mean(dsc_cut)-7*np.std(dsc_cut), np.mean(dsc_cut)+7*np.std(dsc_cut)]
-    
-    
-    epos['m2q'] = m2q_corr
-    
-    
-    #apt_fileio.write_epos_numpy(epos,'Q:\\NIST_Projects\\EUV_APT_IMS\\BWC\\GaN epos files\\R20_07148-v01_vbmq_corr.epos')
+
     
     return 0
+
+
+
+ 
+def testing():
+    
+    # Load data
+    fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_00504-v56.epos"
+    
+    epos = apt_fileio.read_epos_numpy(fn)
+        
+    epos1 = epos[0:-1:2]
+    epos2 = epos[1::2]
+
+    cts_per_slice=650
+    m2q_roi = [0.8,150]
+    
+    import time
+    t_start = time.time()
+    pointwise_scales,piecewise_scales = get_all_scale_coeffs(epos1['m2q'],
+                                                             m2q_roi=m2q_roi,
+                                                             cts_per_slice=cts_per_slice,
+                                                             max_scale=1.15)
+    t_end = time.time()
+    print('Total Time = ',t_end-t_start)
+    
+    
+    # Compute corrected data
+    m2q_corr = epos2['m2q']/pointwise_scales
+        
+    _, ys = bin_dat(m2q_corr,isBinAligned=True,bin_width=0.01,user_roi=[0,150])
+
+    print(np.sum(np.square(ys)))
+    
+    return 0   
+
+
+
+
+
+
+

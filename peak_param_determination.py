@@ -17,6 +17,7 @@ from constrNMPy import constrNM
 
 import matplotlib.pyplot as plt
 
+# Prints the composition data structure in a 
 def pretty_print_compositions(compositions,pk_data):
     keys = list(pk_data.dtype.fields.keys())
     keys.remove('m2q')

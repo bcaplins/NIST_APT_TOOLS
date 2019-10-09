@@ -19,19 +19,27 @@ import peak_param_determination as ppd
 from histogram_functions import bin_dat
 
 # Read in data
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
-#fn = r'Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbmq_corr.epos'
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbmq_corr.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\190421_AlGaN50p7_A83\R20_07209-v01.epos"
+#
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
+#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
+fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
+
+
 
 fn = fn[:-5]+'_vbm_corr.epos'
 epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[epos.size//2:-1]
 
 # Plot m2q vs event index and show the current ROI selection
-roi_event_idxs = np.arange(1000,epos.size-1000)
+roi_event_idxs = np.arange(5000,epos.size-10000)
+
 #roi_event_idxs = np.arange(epos.size)
 ax = plotting_stuff.plot_m2q_vs_time(epos['m2q'],epos,fig_idx=1)
 ax.plot(roi_event_idxs[0]*np.ones(2),[0,1200],'--k')
@@ -47,7 +55,7 @@ isSingle = np.nonzero(epos['ipp'] == 1)
 
 # Define peaks to range
 ed = initElements_P3.initElements()
-#                            N      Ga  Da
+#                            N      Ga      Mg  Da
 # Define possible peaks
 
 pk_data =   np.array(    [  (1,     0,      0,  ed['N'].isotopes[14][0]/2),
@@ -69,9 +77,40 @@ pk_data =   np.array(    [  (1,     0,      0,  ed['N'].isotopes[14][0]/2),
                             (0,     1,      0,  ed['Ga'].isotopes[69][0]),
                             (0,     1,      0,  ed['Ga'].isotopes[71][0]),
                             (0,     1,      0,  ed['Ga'].isotopes[71][0]+ed['H'].isotopes[1][0]),
-                            (0,     0,      1,  ed['Mg'].isotopes[24][0]/2)
+                            (0,     0,      1,  ed['In'].isotopes[113][0]/2),
+                            (0,     0,      1,  ed['In'].isotopes[115][0]/2)
                             ],
-                            dtype=[('N','i4'),('Ga','i4'),('Mg','i4'),('m2q','f4')] )
+                            dtype=[('N','i4'),('Ga','i4'),('In','i4'),('m2q','f4')] )
+
+##                            N      Ga      Al  Da
+## Define possible peaks
+#
+#pk_data =   np.array(    [  (1,     0,      0,  ed['N'].isotopes[14][0]/2),
+#                            (0,     0,      1,  ed['Al'].isotopes[27][0]/3),
+#                            (0,     0,      1,  ed['Al'].isotopes[27][0]/2),
+#                            (1,     0,      0,  ed['N'].isotopes[14][0]/1),
+#                            (1,     0,      0,  ed['N'].isotopes[15][0]/1),
+#                            (1,     0,      0,  ed['N'].isotopes[15][0]+ed['H'].isotopes[1][0]),
+#                            (1,     0,      1,  (ed['N'].isotopes[14][0]+ed['Al'].isotopes[27][0])/2),
+#                            (0,     1,      0,  ed['Ga'].isotopes[69][0]/3),
+#                            (0,     1,      0,  ed['Ga'].isotopes[71][0]/3),
+#                            (0,     0,      1,  ed['Al'].isotopes[27][0]/1),
+#                            (2,     0,      0,  ed['N'].isotopes[14][0]*2),
+#                            (2,     0,      0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]),
+#                            (2,     0,      0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]+ed['H'].isotopes[1][0]),
+#                            (0,     1,      0,  ed['Ga'].isotopes[69][0]/2),
+#                            (0,     1,      0,  ed['Ga'].isotopes[71][0]/2),
+#                            (1,     1,      0,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[69][0])/2),
+#                            (3,     0,      0,  ed['N'].isotopes[14][0]*3),
+#                            (1,     1,      0,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[71][0])/2),
+#                            (3,     1,      0,  (ed['Ga'].isotopes[69][0]+3*ed['N'].isotopes[14][0])/2),
+#                            (3,     1,      0,  (ed['Ga'].isotopes[71][0]+3*ed['N'].isotopes[14][0])/2),
+#                            (0,     1,      0,  ed['Ga'].isotopes[69][0]),
+#                            (0,     1,      0,  ed['Ga'].isotopes[71][0]),
+#                            (0,     1,      0,  ed['Ga'].isotopes[71][0]+ed['H'].isotopes[1][0])
+#                            ],
+#                            dtype=[('N','i4'),('Ga','i4'),('Al','i4'),('m2q','f4')] )
+
 
 # Define which peaks to use for CSR calcs
 Ga1p_m2qs = [ed['Ga'].isotopes[69][0], ed['Ga'].isotopes[71][0]]
@@ -96,7 +135,7 @@ S = T-B
 std_S = np.sqrt(T+B)
 # Make up a threshold for peak detection... for the most part this won't matter
 # since weak peaks don't contribute to stoichiometry much... except for Mg!
-is_peak = S>4*np.sqrt(2*B)
+is_peak = S>2*np.sqrt(2*B)
 for idx, ct in enumerate(cts):
     if not is_peak[idx]:
         for i in np.arange(len(ct)):
@@ -163,6 +202,7 @@ sys.exit()
 
 #### START EXPLORATORY ANALYSIS ####
 
+Ga_idx =0
 
 fig = plt.figure(num=1000)
 fig.clear()
@@ -244,9 +284,9 @@ ax = fig.gca()
 
 #ax.plot(csr,Ga_comp,'.',label='time based')
 ax.errorbar(csr,Ga_comp,yerr=Ga_comp_std,fmt='.',capsize=4)
-ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
+ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
 
-ax.set(xlabel='CSR', ylabel='Ga %', ylim=[0, 1], xlim=[2e-3,1])
+ax.set(xlabel='CSR', ylabel='Ga %', ylim=[0, 1], xlim=[2e-3,10])
 #ax.grid()
 #fig.tight_layout()
 #fig.canvas.manager.window.raise_()
@@ -273,9 +313,71 @@ fig.tight_layout()
 
 
 
+
+
+
+
+
+
+
 # Slice and dice the data in wall_time
 idxs_list = []
-STEP = 100000
+STEP = 10000
+s_idx = 0
+while s_idx<epos.size:
+    e_idx = np.min([epos.size,s_idx+STEP])
+    idxs_list.append([s_idx,e_idx])
+    s_idx = e_idx
+    
+# Count and compositions
+csr = np.full(len(idxs_list),-1.0)
+Ga_comp = np.full(len(idxs_list),-1.0)
+Ga_comp_std = np.full(len(idxs_list),-1.0)
+In_comp = np.full(len(idxs_list),-1.0)
+In_comp_std = np.full(len(idxs_list),-1.0)
+
+
+
+keys = list(pk_data.dtype.fields.keys())
+keys.remove('m2q')
+Ga_idx = keys.index('Ga')
+In_idx = keys.index('In')
+for loop_idx, idxs in enumerate(idxs_list):
+    sub_epos = epos[idxs[0]:idxs[1]]
+    r = np.sqrt(sub_epos['x_det']**2+sub_epos['y_det']**2)
+    sub_idxs = np.nonzero(r>=0)
+    cts = ppd.do_counting(sub_epos[sub_idxs],pk_params,glob_bg_param)
+  
+    Ga_comp[loop_idx] = ppd.do_composition(pk_data,cts)[0][0][Ga_idx]
+    Ga_comp_std[loop_idx] = ppd.do_composition(pk_data,cts)[0][1][Ga_idx]
+    
+    In_comp[loop_idx] = ppd.do_composition(pk_data,cts)[0][0][In_idx]
+    In_comp_std[loop_idx] = ppd.do_composition(pk_data,cts)[0][1][In_idx]
+
+fig = plt.figure(num=101)
+fig.clear()
+ax = fig.gca()
+ax.errorbar((np.arange(Ga_comp.size)+0.5)*STEP,In_comp,yerr=In_comp_std,fmt='.',capsize=4)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Slice and dice the data in wall_time
+idxs_list = []
+STEP = 10000
 s_idx = 0
 while s_idx<epos.size:
     e_idx = np.min([epos.size,s_idx+STEP])
@@ -290,6 +392,7 @@ Ga_comp_std = np.full(len(idxs_list),-1.0)
 keys = list(pk_data.dtype.fields.keys())
 keys.remove('m2q')
 Ga_idx = keys.index('Ga')
+#In_idx = keys.index('In')
 for loop_idx, idxs in enumerate(idxs_list):
     sub_epos = epos[idxs[0]:idxs[1]]
     r = np.sqrt(sub_epos['x_det']**2+sub_epos['y_det']**2)
@@ -317,6 +420,7 @@ fig = plt.figure(num=101)
 fig.clear()
 ax = fig.gca()
 ax.plot(np.arange(Ga_comp.size),csr,'.')
+#ax.plot(np.arange(Ga_comp.size),Ga_comp,'.')
 
 
 
@@ -334,16 +438,22 @@ for rq in np.arange(2,32,STEP):
 # Count and compositions
 csr = np.full(len(idxs_list),-1.0)
 Ga_comp = np.full(len(idxs_list),-1.0)
+Ga_comp_std = np.full(len(idxs_list),-1.0)
 
 
-
+Ga_idx = keys.index('Ga')
 for loop_idx, idxs in enumerate(idxs_list):
     cts = ppd.do_counting(epos[idxs],pk_params,glob_bg_param)
-    csr[loop_idx] = (cts['total'][9]+cts['total'][10])/(cts['total'][14]+cts['total'][15])
-    Ga_comp[loop_idx] = ppd.do_composition(pk_data,cts)
+    
+    csr[loop_idx] = np.sum(cts['total'][Ga2p_idxs])/np.sum(cts['total'][Ga1p_idxs])
+    Ga_comp[loop_idx] = ppd.do_composition(pk_data,cts)[0][0][Ga_idx]
+    Ga_comp_std[loop_idx] = ppd.do_composition(pk_data,cts)[0][1][Ga_idx]
 
+ax.errorbar(csr,Ga_comp,yerr=Ga_comp_std,fmt='.',capsize=4,label='det based (radial)')
+ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
 
-ax.plot(csr,Ga_comp,'.',label='det based (radial)')
+ax.set(xlabel='CSR', ylabel='Ga %', ylim=[0, 1], xlim=[0,4])
+
 #ax.plot([0,5],[0.5,0.5],'k--')
 
 
