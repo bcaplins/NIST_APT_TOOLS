@@ -396,7 +396,7 @@ def shaded_plot(ax,x,y,idx,col_idx=None):
     if col_idx is None:
         col_idx = idx
         
-    sc = 100
+    sc = 50
     cols = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
     xlim = ax.get_xlim()
@@ -407,20 +407,20 @@ def shaded_plot(ax,x,y,idx,col_idx=None):
 #    ax.plot(x,y+idx*sc, color='k')
     return
 
-    
-    
+
+
 
 # Plot histogram for sio2
 fig = plt.figure(figsize=(2*3.14961,2*3.14961),num=654321,dpi=100)
 plt.clf()
 ax2 = fig.subplots(1,1)
-N,x_edges,y_edges = create_histogram(tof_bcorr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
+N,x_edges,y_edges = create_histogram(tof_corr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
 #ax1.imshow(np.log10(1+1*np.transpose(N)), aspect='auto', 
 #           extent=extents(x_edges) + extents(y_edges), origin='lower', cmap=cc.cm.CET_L8,
 #           interpolation='bilinear')
 
-event_idx_range_ref = [10000, 20000]
-event_idx_range_mov = [70000, 80000]
+event_idx_range_ref = [0, 0+1024]
+event_idx_range_mov = [124000, 124000+1024]
 
 x_centers = edges_to_centers(x_edges)
 idxs_ref = (x_centers>=event_idx_range_ref[0]) & (x_centers<=event_idx_range_ref[1])
@@ -433,16 +433,17 @@ y_centers = edges_to_centers(y_edges)
 
 
 
-ax2.set(xlim=[352,366])
+ax2.set(xlim=[290,320])
+#ax2.set(xlim=[0, 1000])
 #ax3.set(xlim=[498,512])
 
-N,x_edges,y_edges = create_histogram(0.998*tof_bcorr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
+N,x_edges,y_edges = create_histogram(0.98*tof_corr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
 mov_hist = np.sum(N[idxs_mov,:],axis=0)
 
 #shaded_plot(ax2,y_centers,ref_hist+mov_hist,2)
 shaded_plot(ax2,y_centers,mov_hist,2,2)
 
-N,x_edges,y_edges = create_histogram(1.00317*tof_bcorr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
+N,x_edges,y_edges = create_histogram(0.99*tof_corr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
 mov_hist = np.sum(N[idxs_mov,:],axis=0)
 
 shaded_plot(ax2,y_centers,ref_hist,3,3)
@@ -450,7 +451,7 @@ shaded_plot(ax2,y_centers,mov_hist,1,1)
 #shaded_plot(ax2,y_centers,mov_hist+ref_hist,1)
 
 
-N,x_edges,y_edges = create_histogram(1.008*tof_bcorr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
+N,x_edges,y_edges = create_histogram(1.0*tof_corr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
 mov_hist = np.sum(N[idxs_mov,:],axis=0)
 
 
@@ -458,6 +459,7 @@ shaded_plot(ax2,y_centers,mov_hist,0,col_idx=0)
 #shaded_plot(ax2,y_centers,mov_hist+ref_hist,0)
 
 
+#fig.gca().grid()
 
 fig.tight_layout()
 
@@ -467,10 +469,10 @@ fig.savefig(r'Q:\users\bwc\APT\scale_corr_paper\correction_idea1.svg', format='s
 
 
 
-cs = np.linspace(0.99, 1.01, 256)
+cs = np.linspace(0.975, 1.005, 256)
 dp = np.zeros_like(cs)
 for idx, c in enumerate(cs):
-    N,x_edges,y_edges = create_histogram(c*tof_bcorr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
+    N,x_edges,y_edges = create_histogram(c*tof_corr,y_roi=[80,400],cts_per_slice=2**10,delta_y=0.0625)
     mov_hist = np.sum(N[idxs_mov,:],axis=0)
     dp[idx] = np.sum((mov_hist/np.sum(mov_hist))*(ref_hist/np.sum(ref_hist)))
     
@@ -478,21 +480,21 @@ for idx, c in enumerate(cs):
 
 # Plot histogram for sio2
 
-fig = plt.figure(figsize=(2*3.14961,2*3.14961),num=7654321,dpi=100)
+fig = plt.figure(figsize=(2*3.14961,1*3.14961),num=7654321,dpi=100)
 plt.clf()
 ax1 = fig.subplots(1,1)
 
 
 
-ax1.set(xlim=[0.99, 1.01],ylim=[0,1.1])
+ax1.set(xlim=[0.975, 1.005],ylim=[-0.1,1.1])
 
 f = scipy.interpolate.interp1d(cs,dp/np.max(dp))
 
 cols = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
-xq = [0.998, 1.00317, 1.008]
+xq = [0.98, 0.99017, 1.0]
 for idx in [0,1,2]:
-    ax1.plot(xq[idx],f(xq[idx]),'o',markersize=10,color=cols[2-idx])
+    ax1.plot(xq[idx],f(xq[idx]),'o',markersize=14,color=cols[2-idx])
 
 
 ax1.plot(cs,dp/np.max(dp),'k')
@@ -506,7 +508,7 @@ fig.savefig(r'Q:\users\bwc\APT\scale_corr_paper\correction_idea2.svg', format='s
 
 
 
-
+import sel_align_m2q_log_xcorr_v2
 
 
 
@@ -523,12 +525,12 @@ epos = epos[:400000]
 fake_tof = np.sqrt((296/312)*epos['m2q']/1.393e-4)
 
 
-cts_per_slice=2**8
+cts_per_slice=2**7
 #m2q_roi = [0.9,190]
 tof_roi = [0, 1000]
 import time
 t_start = time.time()
-pointwise_scales,piecewise_scales = sel_align_m2q_log_xcorr.get_all_scale_coeffs(epos['m2q'],
+pointwise_scales,piecewise_scales = sel_align_m2q_log_xcorr_v2.get_all_scale_coeffs(epos['m2q'],
                                                          m2q_roi=[0.8,80],
                                                          cts_per_slice=cts_per_slice,
                                                          max_scale=1.15)
@@ -748,11 +750,11 @@ epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[:400000]
 
 
-cts_per_slice=2**8
+cts_per_slice=2**9
 
 import time
 t_start = time.time()
-pointwise_scales,piecewise_scales = sel_align_m2q_log_xcorr.get_all_scale_coeffs(epos['m2q'],
+pointwise_scales,piecewise_scales = sel_align_m2q_log_xcorr_v2.get_all_scale_coeffs(epos['m2q'],
                                                          m2q_roi=[10,250],
                                                          cts_per_slice=cts_per_slice,
                                                          max_scale=1.15)
@@ -901,3 +903,76 @@ ax3.set(ylim=[10,None])
 fig.tight_layout()
 
 fig.savefig(r'Q:\users\bwc\APT\scale_corr_paper\Ceria_NUV_corrected_hist.svg', format='svg', dpi=600)
+
+
+
+
+
+
+
+
+
+ceria_chi2 = [50100017.77823232, 54953866.6417411 , 56968470.41426052,
+                57832991.31751654, 58136713.37802257, 58103886.08055325,
+                57387594.45685758, 56278878.21237884, 52715317.92279702,
+                48064845.44202947, 42888989.38802697, 34852375.17765743,
+                30543492.44201695]
+ceria_slic = [1.6000e+01, 3.2000e+01, 6.4000e+01, 1.2800e+02, 2.5600e+02,
+              5.1200e+02, 1.0240e+03, 2.0480e+03, 4.0960e+03, 8.1920e+03,
+              1.6384e+04, 3.2768e+04, 6.5536e+04]
+
+sio2_slic = [1.6000e+01, 3.2000e+01, 6.4000e+01, 1.2800e+02, 2.5600e+02,
+           5.1200e+02, 1.0240e+03, 2.0480e+03, 4.0960e+03, 8.1920e+03,
+           1.6384e+04, 3.2768e+04, 6.5536e+04]
+
+sio2_chi2 = [1.14778821e+08, 1.47490976e+08, 1.52686129e+08, 1.51663402e+08,
+           1.45270347e+08, 1.34437550e+08, 1.18551040e+08, 1.01481358e+08,
+           8.62360167e+07, 7.45989701e+07, 6.50088595e+07, 4.22995630e+07,
+           3.71045091e+07]
+
+
+fig = plt.figure(num=666)
+fig.clear()
+ax = fig.gca()
+
+ax.plot(sio2_slic,sio2_chi2/np.max(sio2_chi2),'s-', 
+        markersize=8,label='SiO2')
+
+ax.plot(ceria_slic,ceria_chi2/np.max(ceria_chi2),'o-', 
+        markersize=8,label='ceria')
+ax.set(xlabel='N (events per chunk)', ylabel='compactness metric (normalized)')
+ax.set_xscale('log')    
+
+
+ax.legend()
+   
+ax.set_xlim(5,1e5)
+ax.set_ylim(0.15, 1.05)
+
+
+
+fig.tight_layout()
+
+fig.savefig(r'Q:\users\bwc\APT\scale_corr_paper\optimal_N.svg', format='svg', dpi=600)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -61,7 +61,7 @@ def edges_to_centers(*edges):
         centers.append((es[0:-1]+es[1:])/2)
     return centers
 
-def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
+def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10,delta_ly=1e-4):
     if m2q_roi is None:        
         m2q_roi = [0.5,200]
     
@@ -69,7 +69,7 @@ def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
     lys = np.log(m2q)
     
     # Create the histgram.  Compute centers and delta y
-    N,x_edges,ly_edges = create_histogram(lys,y_roi=m2q_roi,cts_per_slice=cts_per_slice)
+    N,x_edges,ly_edges = create_histogram(lys,y_roi=m2q_roi,cts_per_slice=cts_per_slice,delta_ly=delta_ly)
     x_centers,ly_centers = edges_to_centers(x_edges,ly_edges)
     delta_ly = ly_edges[1]-ly_edges[0]
     
@@ -92,7 +92,7 @@ def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
     lys_corr = lys - pointwise_ly_shifts
 
     # Recompute the histogram 
-    N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi,cts_per_slice=cts_per_slice)
+    N,x_edges,ly_edges = create_histogram(lys_corr,y_roi=m2q_roi,cts_per_slice=cts_per_slice,delta_ly=delta_ly)
     x_centers,ly_centers = edges_to_centers(x_edges,ly_edges)
     delta_ly = ly_edges[1]-ly_edges[0]
 
@@ -115,7 +115,7 @@ def get_all_scale_coeffs(m2q,max_scale = 1.1,m2q_roi=None,cts_per_slice=2**10):
 
 
 
-def __main__():
+def driver():
     
     
     plt.close('all')
@@ -190,186 +190,3 @@ def __main__():
 
     
     return 0
-
-
-
-def test_1d_vec(X):
-    vals = X.copy()
-    vals.sort()
-    cs = np.r_[0,np.cumsum(vals)[0:-1]]
-    idxs = np.arange(vals.size)
-    tot_dist_1d = np.sum(vals*idxs-cs)
-    return tot_dist_1d
-
-def chi2(dat):
-    n = dat.size
-    f = np.sum(dat)    
-    f_n = f/n    
-    chi2 = np.sum(np.square(dat-f_n)/f_n)
-    return chi2
-
- 
-def testing():
-    
-    # Load data
-#    fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_00504-v56.epos"
-#    fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_04472-v02_allVfromAnn.epos"
-    fn = r"C:\Users\bwc\Documents\NetBeansProjects\R44_03115\recons\recon-v02\default\R44_03115-v02.epos"
-    
-    epos = apt_fileio.read_epos_numpy(fn)
-#    epos = epos[0:1000000]    
-    
-    epos1 = epos[0:-1:2]
-    epos2 = epos[1::2]
-
-
-    
-    
-    N_lower = 8
-    N_upper = 16
-    N = N_upper-N_lower+1
-    slicings = np.logspace(N_lower,N_upper,N,base=2)
-    
-    
-    opt_res = np.zeros(N)
-    time_res = np.zeros(N)
-
-    for idx,cts_per_slice in enumerate(slicings):
-        m2q_roi = [0.9,180]
-        
-        import time
-        t_start = time.time()
-        pointwise_scales,piecewise_scales = get_all_scale_coeffs(epos1['m2q'],
-                                                                 m2q_roi=m2q_roi,
-                                                                 cts_per_slice=cts_per_slice,
-                                                                 max_scale=1.15)
-        t_end = time.time()
-        time_res[idx] = t_end-t_start
-        print('Total Time = ',time_res[idx])
-        
-        
-        # Compute corrected data
-        m2q_corr = epos2['m2q']/pointwise_scales
-            
-        _, ys = bin_dat(m2q_corr,isBinAligned=True,bin_width=0.01,user_roi=[0,250])
-    
-        opt_res[idx] = chi2(ys)
-#        ys = ys/np.sum(ys)
-#        opt_res[idx] = np.sum(np.square(ys))
-#        opt_res[idx] = test_1d_vec(m2q_corr[(m2q_corr>0.8) & (m2q_corr<80)])
-        print(opt_res[idx])
-        
-    print(slicings)
-    print(opt_res/np.max(opt_res))
-    print(time_res)
-    
-    
-    
-    fig = plt.figure(num=666)
-    fig.clear()
-    ax = fig.gca()
-
-    ax.plot(tmpx,tmpy,'s-', 
-            markersize=8,label='SiO2')
-
-    ax.plot(slicings,opt_res/np.max(opt_res),'o-', 
-            markersize=8,label='ceria')
-    ax.set(xlabel='N (events per chunk)', ylabel='compactness metric (normalized)')
-    ax.set_xscale('log')    
-
-    
-    ax.legend()
-       
-    ax.set_xlim(5,1e5)
-    ax.set_ylim(0.15, 1.05)
-
-
-    fig.tight_layout()
-    
-    
-    return 0   
-
-
-
-
-#ceria_chi2 = [50100017.77823232, 54953866.6417411 , 56968470.41426052,
-#                57832991.31751654, 58136713.37802257, 58103886.08055325,
-#                57387594.45685758, 56278878.21237884, 52715317.92279702,
-#                48064845.44202947, 42888989.38802697, 34852375.17765743,
-#                30543492.44201695]
-#ceria_slic = [1.6000e+01, 3.2000e+01, 6.4000e+01, 1.2800e+02, 2.5600e+02,
-#              5.1200e+02, 1.0240e+03, 2.0480e+03, 4.0960e+03, 8.1920e+03,
-#              1.6384e+04, 3.2768e+04, 6.5536e+04]
-#
-#sio2_slic = [1.6000e+01, 3.2000e+01, 6.4000e+01, 1.2800e+02, 2.5600e+02,
-#           5.1200e+02, 1.0240e+03, 2.0480e+03, 4.0960e+03, 8.1920e+03,
-#           1.6384e+04, 3.2768e+04, 6.5536e+04]
-#
-#sio2_chi2 = [1.14778821e+08, 1.47490976e+08, 1.52686129e+08, 1.51663402e+08,
-#           1.45270347e+08, 1.34437550e+08, 1.18551040e+08, 1.01481358e+08,
-#           8.62360167e+07, 7.45989701e+07, 6.50088595e+07, 4.22995630e+07,
-#           3.71045091e+07]
-#
-#
-#fig = plt.figure(num=666)
-#fig.clear()
-#ax = fig.gca()
-#
-#ax.plot(sio2_slic,sio2_chi2/np.max(sio2_chi2),'s-', 
-#        markersize=8,label='SiO2')
-#
-#ax.plot(ceria_slic,ceria_chi2/np.max(ceria_chi2),'o-', 
-#        markersize=8,label='ceria')
-#ax.set(xlabel='N (events per chunk)', ylabel='compactness metric (normalized)')
-#ax.set_xscale('log')    
-#
-#
-#ax.legend()
-#   
-#ax.set_xlim(5,1e5)
-#ax.set_ylim(0.15, 1.05)
-#
-#
-#fig.tight_layout()
-#
-#
-#
-#
-#  
-## Load data
-#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_00504-v56.epos"
-##fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\R45_data\R45_04472-v02_allVfromAnn.epos"
-#epos = apt_fileio.read_epos_numpy(fn)
-##epos = epos[0:400000]    
-#m2q_roi = [0.9,200]
-#
-#import time
-#t_start = time.time()
-#pointwise_scales,piecewise_scales = get_all_scale_coeffs(epos['m2q'],
-#                                                         m2q_roi=m2q_roi,
-#                                                         cts_per_slice=512,
-#                                                         max_scale=1.15)
-#t_end = time.time()
-#print('Total Time = ',t_end-t_start)
-#
-#
-#
-#
-#
-#
-#
-#
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
