@@ -5,7 +5,7 @@ Created on Thu Sep 12 11:53:25 2019
 @author: bwc
 """
 
-# standard imports 
+# standard imports
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -35,6 +35,7 @@ def get_shifts(ref,N,max_shift=150):
 
 #    shifts = max_idxs-np.mean(max_idxs)
     shifts = max_idxs-np.median(max_idxs)
+    print(shifts.shape)
     
     return shifts
 

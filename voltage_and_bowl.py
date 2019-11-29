@@ -111,7 +111,7 @@ def basic_voltage_correction(tof,v_dc,p_guess,ROI,TOF_BIN_SIZE):
     opt_fun = lambda p: -1*TOF_BIN_SIZE*np.sum(np.histogram(mod_basic_voltage_correction(p,tof,v_dc),range=(ROI[0], ROI[1]),bins=N_BIN,density=True)[0]**2)
        
     N_SLICE = 32;
-    p_range = ( (-500/SCALES[0], np.max(v_dc)/SCALES[0]),)
+    p_range = ( (-(np.min([np.min(v_dc)-100,500]))/SCALES[0], np.max(v_dc)/SCALES[0]),)
     res = brute(opt_fun,
                 p_range,
                 Ns=N_SLICE,
