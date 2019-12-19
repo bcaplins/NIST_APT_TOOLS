@@ -108,3 +108,14 @@ for ref_pk_m2q in ref_pk_m2qs:
 epos['m2q'] = m2q_corr2
 new_fn = fn[:-5]+'_vbmq_corr.epos'
 apt_fileio.write_epos_numpy(epos,new_fn)
+
+
+
+
+
+
+plotting_stuff.plot_bowl_slices(epos['tof'],epos,3,clearFigure=True,user_ylim=[0,1200])
+
+
+
+
