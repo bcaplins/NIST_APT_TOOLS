@@ -20,7 +20,7 @@ from histogram_functions import bin_dat
 
 # Read in data
 #fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
+fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
 #fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbmq_corr.epos"
 #fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
 #fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
@@ -29,7 +29,7 @@ from histogram_functions import bin_dat
 #
 #fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
 #fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
-fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
+#fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
 
 
 

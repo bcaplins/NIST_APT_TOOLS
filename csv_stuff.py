@@ -28,11 +28,12 @@ fig = plt.figure(num=1000)
 fig.clear()
 ax = fig.gca()
 
-ax.plot(csr,ga,'.')
+ax.plot(csr,ga,'rs',label='Ga')
+ax.plot(csr,1-ga,'ko',label='N')
 ax.plot([1e-4, 1e1],[0.5, 0.5],'k--')
 
 
-ax.set(xlabel='CSR', ylabel='Ga %')
+ax.set(xlabel='CSR (Ga$^{++}$/Ga$^{+}$)', ylabel='apparent atomic %')
 ax.set_xlim([2e-4, 10])
 ax.set_ylim([0, 1])
 #ax.grid(which='both')

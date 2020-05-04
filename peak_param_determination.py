@@ -285,42 +285,76 @@ def forward_moving_average(a, n=3, reverse=False) :
         ret = np.convolve(np.r_[a[n-1:0:-1],a],kern,'valid')
     return ret
 
+# Assumes that the xs are linearly spaced
 def physics_bg(xs,alpha):
-    return alpha*np.reciprocal(np.sqrt(xs+0.1))
+    bin_size = np.mean(np.diff(xs))    
+    EPS = 0.01
+    return bin_size*alpha*np.reciprocal(np.sqrt(xs+EPS))
 
-def fit_uncorr_bg(dat,fit_roi=[3.5,6.5]):
+def get_glob_bg(m2qs,rois=None):
+    if rois==None:
+        rois = [[3.5,6.5]]
+    
+    # Check to see if just one roi. Nested lists are what the code expects
+    if len(rois)==2:
+        if type(rois[0]) is not list:
+            rois = [rois]
+    
+    EPS = 0.01
+    
+    numerator = 0.0
+    denominator = 0.0
+    for roi in rois:
+        upp = np.max(roi)
+        low = np.min(roi)    
+        numerator += m2qs[(m2qs>=low) & (m2qs<=upp)].size
+        denominator += 2*(np.sqrt(upp+EPS)-np.sqrt(low+EPS))
+    
+    print('# of counts used to define global bg: ', numerator)
+    print('global bg parameter error: ',100*np.sqrt(numerator)/numerator,' %')
+    bg_param = numerator/denominator
+    
+#    bg_param_per_dalton = (epos['m2q'][(epos['m2q']>=roi[0]) & (epos['m2q']<=roi[1])].size) \
+#                            /(2*(np.sqrt(roi[1]+EPS)-np.sqrt(roi[0]+EPS)))     
+#    def bg_func(m2qs,m2q_bin_size):
+#        return m2q_bin_size*bg_param/np.sqrt(m2qs+EPS)
+        
+    return bg_param
 
-    xs_full, ys_full = bin_dat(dat,user_roi=[0,100],isBinAligned=True)
-    
-    xs = xs_full[(xs_full>fit_roi[0]) & (xs_full<fit_roi[1])]
-    ys = ys_full[(xs_full>fit_roi[0]) & (xs_full<fit_roi[1])]
-    
-    opt_fun = lambda p: np.sum(np.square(physics_bg(xs,*p)-ys))
-    
-    p_guess = np.array([100])
-    
-    
-    
-    opts = {'xatol' : 1e-5,
-            'fatol' : 1e-12,
-             'maxiter' : 512,
-             'maxfev' : 512,
-             'disp' : True}
-    res = minimize(opt_fun, 
-                   p_guess,
-                   options=opts,
-                   method='Nelder-Mead')  
-    
+#
+#def fit_uncorr_bg(dat,fit_roi=[3.5,6.5]):
+#
+#    xs_full, ys_full = bin_dat(dat,user_roi=[0,100],isBinAligned=True)
+#    
+#    xs = xs_full[(xs_full>fit_roi[0]) & (xs_full<fit_roi[1])]
+#    ys = ys_full[(xs_full>fit_roi[0]) & (xs_full<fit_roi[1])]
+#    
+#    opt_fun = lambda p: np.sum(np.square(physics_bg(xs,*p)-ys))
+#    
+#    p_guess = np.array([100])
+#    
+#    
+#    
+#    opts = {'xatol' : 1e-5,
+#            'fatol' : 1e-12,
+#             'maxiter' : 512,
+#             'maxfev' : 512,
+#             'disp' : True}
+#    res = minimize(opt_fun, 
+#                   p_guess,
+#                   options=opts,
+#                   method='Nelder-Mead')  
+#    
 #    mod_bg = physics_bg(xs_full,res.x)
 #        
 #    fig = plt.figure(num=1299)
 #    fig.clear()
 #    ax = plt.axes()
 #    
-#    
+#    ax.plot(xs_full,ys_full)
 #    ax.plot(xs_full,mod_bg)
-#    
-    return res.x
+##    
+#    return res.x
     
     
 
