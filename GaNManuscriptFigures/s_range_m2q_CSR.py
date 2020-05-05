@@ -5,11 +5,13 @@ Spyder Editor
 This is a temporary script file.
 """
 
-# Simple background function.  Assumes background has form approx 1/sqrt(m2q).
-# Note. bg_param assumed a 1 dalton binning.  Mult by binsize for other sizes.
-#
-
-
+# Need to put the functions in the path
+# Probably not necessary if I understood Python/Git/modules better
+import os 
+import sys
+parent_directory = os.getcwd().rsplit(sep='\\',maxsplit=1)[0]
+if parent_directory not in sys.path:
+    sys.path.insert(1, parent_directory)
 
 # standard imports 
 import numpy as np
@@ -21,25 +23,19 @@ import plotting_stuff
 import initElements_P3
 
 import peak_param_determination as ppd
-
 from histogram_functions import bin_dat
 
 plt.close('all')
 
 # Read in data
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos" # Mg doped
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01_vbmq_corr.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07247.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\190421_AlGaN50p7_A83\R20_07209-v01.epos"
-#
-fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
-#fn = r"\\cfs2w.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
-#fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
+work_dir = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript"
 
+#fn = work_dir+"\\"+r"R20_07250-v01.epos" # Mg doped
+#fn = work_dir+"\\"+r"R20_07199-v01.epos" # InGaN QW
+#fn = work_dir+"\\"+r"R20_07247.epos" # CSR ~ 2
+fn = work_dir+"\\"+r"R20_07248-v01.epos" # CSR ~ 2
+#fn = work_dir+"\\"+r"R20_07249-v01.epos" # CSR ~ 0.5
+#fn = work_dir+"\\"+r"R20_07250-v01.epos" # CSR ~ 0.1
 
 
 fn = fn[:-5]+'_vbm_corr.epos'
@@ -632,7 +628,7 @@ es2cs = lambda es : (es[:-1]+es[1:])/2.0
 #idxs_list = []
     
 N_time_chunks = int(np.floor(epos.size/256000))
-#N_time_chunks = 4
+N_time_chunks = 4
 
 N_events_per_time_chunk = epos.size//N_time_chunks
 time_chunk_edges = np.arange(N_time_chunks+1)*N_events_per_time_chunk
