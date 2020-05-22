@@ -5,6 +5,14 @@ Spyder Editor
 This is a temporary script file.
 """
 
+# Need to put the functions in the path
+# Probably not necessary if I understood Python/Git/modules better
+import os 
+import sys
+parent_directory = os.getcwd().rsplit(sep='\\',maxsplit=1)[0]
+if parent_directory not in sys.path:
+    sys.path.insert(1, parent_directory)
+
 # standard imports 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,7 +31,9 @@ from voltage_and_bowl import do_voltage_and_bowl
 
 
 # Read in template spectrum
-ref_fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
+work_dir = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript"
+
+ref_fn = work_dir+"\\"+"R20_07094-v03.epos"
 ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #ref_epos = ref_epos[0:ref_epos.size//2]
 
@@ -31,13 +41,15 @@ ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\180821_GaN_A71\R20_07094-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\190421_AlGaN50p7_A83\R20_07208-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07148-v01.epos"
-fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07247.epos"
+#fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07247.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07248-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07249-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\R20_07250-v01.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
 #fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
+fn = work_dir+"\\"+"R20_07199-v03.epos"
+
 
 
 epos = apt_fileio.read_epos_numpy(fn)

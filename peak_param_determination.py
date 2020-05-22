@@ -114,7 +114,7 @@ def do_composition(pk_data,cts):
 
 def do_counting(epos, pk_params, glob_bg_param):
     
-    xs, _ = bin_dat(epos['m2q'],user_roi=[0,100],isBinAligned=True)
+    xs, _ = bin_dat(epos['m2q'],user_roi=[0,150],isBinAligned=True)
     
     glob_bg = physics_bg(xs,glob_bg_param)    
 
@@ -155,7 +155,7 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
                                                 ('loc_bg','f4')])
     pk_params['x0_nominal'] = peak_m2qs
     
-    full_roi = np.array([0, 100])
+    full_roi = np.array([0, 150])
     xs_full_1mDa, ys_full_1mDa = bin_dat(epos['m2q'],user_roi=full_roi,isBinAligned=True)
     ys_full_5mDa_sm = do_smooth_with_gaussian(ys_full_1mDa, std=5)
     
@@ -168,7 +168,7 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
     #ys_fwd = np.roll(ys_full_50mDa_sm,50)
     #ys_bwd = np.roll(ys_full_50mDa_sm,-50)
     
-    
+#    
 #    fig = plt.figure(num=222)
 #    fig.clear()
 #    ax = plt.axes()
@@ -197,11 +197,11 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
         
         pk_param['x0_mean_shift'] = mean_shift_peak_location(pk_dat,user_std=pk_param['std_fit'],user_x0=pk_param['x0_g_fit'])
         
-        ax = plt.gca()
-        ax.plot(np.array([1,1])*pk_param['x0_mean_shift'],np.array([0, pk_param['amp']+pk_param['off']]),'k--')
+#        ax = plt.gca()
+#        ax.plot(np.array([1,1])*pk_param['x0_mean_shift'],np.array([0, pk_param['amp']+pk_param['off']]),'k--')
         
-        plt.pause(0.001)
-    #    plt.pause(2)
+#        plt.pause(0.001)
+#        plt.pause(2)
     
         # select starting locations
         pk_idx = np.argmin(np.abs(pk_param['x0_mean_shift']-xs_full_1mDa))
