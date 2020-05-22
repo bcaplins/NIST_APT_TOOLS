@@ -28,10 +28,11 @@ from histogram_functions import bin_dat
 plt.close('all')
 
 # Read in data
-work_dir = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript"
-
+#work_dir = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript"
+#work_dir = r"C:\\Users\\lnm\\Documents\\Div 686\\Data\\181210_D315_A74"
+work_dir = r"C:\\Users\\lnm\\Documents\\Div 686\\Data\\190406_InGaNQW_A82"
 #fn = work_dir+"\\"+r"R20_07094-v03.epos" # template
-fn = work_dir+"\\"+r"R20_07148-v01.epos" # Mg doped
+fn = work_dir+"\\"+r"R20_07199.epos" # Mg doped
 #fn = work_dir+"\\"+r"R20_07199-v03.epos" # InGaN QW
 #fn = work_dir+"\\"+r"R20_07247.epos" # CSR ~ 2
 #fn = work_dir+"\\"+r"R20_07248-v01.epos" # CSR ~ 2
