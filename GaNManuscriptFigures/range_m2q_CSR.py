@@ -25,15 +25,15 @@ import initElements_P3
 import peak_param_determination as ppd
 from histogram_functions import bin_dat
 
-#plt.close('all')
-
+plt.close('all')
+#
 # Read in data
 work_dir = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript"
 
-#fn = work_dir+"\\"+r"R20_07094-v03.epos" # template
+fn = work_dir+"\\"+r"R20_07094-v03.epos" # template
 #fn = work_dir+"\\"+r"R20_07148-v01.epos" # Mg doped
 #fn = work_dir+"\\"+r"R20_07199-v03.epos" # InGaN QW
-fn = work_dir+"\\"+r"R20_07247.epos" # CSR ~ 2
+#fn = work_dir+"\\"+r"R20_07247.epos" # CSR ~ 2
 #fn = work_dir+"\\"+r"R20_07248-v01.epos" # CSR ~ 2
 #fn = work_dir+"\\"+r"R20_07249-v01.epos" # CSR ~ 0.5
 #fn = work_dir+"\\"+r"R20_07250-v01.epos" # CSR ~ 0.1

@@ -78,9 +78,10 @@ pk_params = ppd.get_peak_ranges(epos,pk_data['m2q'],peak_height_fraction=0.1)
     
 # Determine the global background
 #glob_bg_param = ppd.fit_uncorr_bg(epos['m2q'],fit_roi=[3.5,6.5])
-bg_rois=[[3.5,6.5],[90,110]]
-bg_rois=[[8,11],[100,120]]
+bg_rois=[[10,11]]
 glob_bg_param = ppd.get_glob_bg(epos['m2q'],rois=bg_rois)
+
+glob_bg_param = glob_bg_param*0.9
 
 # Count the peaks, local bg, and global bg
 cts = ppd.do_counting(epos,pk_params,glob_bg_param)
