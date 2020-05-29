@@ -40,7 +40,7 @@ def pretty_print_compositions(compositions,pk_data):
             out += '{:.4f}'.format(100*compositions[bg_idx][1][key_idx]).ljust(col_wid)
     
     print(out)
-    return out
+    return None
 
 def compute_comp_and_error(cts,cts_std):
     dfdn = np.zeros((cts.size,cts.size))
@@ -415,7 +415,7 @@ def fit_to_g_off(dat, user_std, user_p0=np.array([])):
 #             'disp' : True}
     
     
-    ret_dict = constrNM(opt_fun,p_guess,lbs,ubs,xtol=1e-5, ftol=1e-12, maxiter=1024, maxfun=1024, full_output=1, disp=1)
+    ret_dict = constrNM(opt_fun,p_guess,lbs,ubs,xtol=1e-5, ftol=1e-12, maxiter=1024, maxfun=1024, full_output=1, disp=0)
     
 #    print(p_guess)
 #    print(ret_dict['xopt'])
