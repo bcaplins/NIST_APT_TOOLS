@@ -29,7 +29,7 @@ bg_rois=[[0.4,0.9]]
 pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs = GaN_fun.fit_spectrum(
         epos=epos, 
         pk_data=pk_data, 
-        peak_height_fraction=0.02, 
+        peak_height_fraction=0.1, 
         bg_rois=bg_rois)
 
 cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
