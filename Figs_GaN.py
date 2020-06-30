@@ -59,8 +59,8 @@ ax.plot(xs, ys_sm, lw=1, label='full spec')
 glob_bg = ppd.physics_bg(xs,glob_bg_param)    
 ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1)
 
-ax.set_xlim(0,80)
-ax.set_ylim(5e0,5e4)
+ax.set_xlim(0,100)
+ax.set_ylim(1e1,5e4)
 ax.grid(b=True)
 ax.set(xlabel='m/z', ylabel='counts')
 ax.set_yscale('log')    
@@ -70,39 +70,5 @@ fig.tight_layout()
 fig.savefig('GaN_full_spectrum.pdf')
 fig.savefig('GaN_full_spectrum.jpg', dpi=300)
 
-
-
-
-
-
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
-# Need to put the functions in the path
-# Probably not necessary if I understood Python/Git/modules better
-import os 
-import sys
-parent_directory = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
-if parent_directory not in sys.path:
-    sys.path.insert(1, parent_directory)
-
-# standard imports 
-import numpy as np
-import matplotlib.pyplot as plt
-
-# custom imports
-import apt_fileio
-import plotting_stuff
-import initElements_P3
-import GaN_data_paths
-
-import peak_param_determination as ppd
-from histogram_functions import bin_dat
-
-plt.close('all')
 
 

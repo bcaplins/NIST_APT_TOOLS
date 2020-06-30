@@ -179,7 +179,8 @@ ax.errorbar(csr.flatten(),N_comp_glob.flatten(),yerr=N_comp_std_glob.flatten(),f
 ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
 ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 
-ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
+#ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
+ax.set(xlabel='CSR', ylabel='%', ylim=[0, 0.6], xlim=[0.1,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
@@ -187,7 +188,8 @@ ax.grid()
 fig.tight_layout()
 fig.canvas.manager.window.raise_()
 
-
+fig.savefig('AlGaN_CSR.pdf')
+fig.savefig('AlGaN_CSR.jpg', dpi=300)
 
 
 fig = plt.figure(num=12)
@@ -200,11 +202,13 @@ ax.errorbar(csr.flatten(),
             yerr=np.sqrt(Ga_comp_std_glob**2+Al_comp_std_glob**2).
             flatten(),
             fmt='.',
-            capsize=4)
+            capsize=4, label='Ga+Al')
+ax.errorbar(csr.flatten(),N_comp_glob.flatten(),yerr=N_comp_std_glob.flatten(),fmt='.',capsize=4, label='N')
 
 ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 
-ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0, 1], xlim=[5e-3,5])
+#ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0, 1], xlim=[5e-3,5])
+ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0.2, 0.8], xlim=[0.1,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
@@ -214,9 +218,32 @@ fig.canvas.manager.window.raise_()
 
 
 
+#Plotting Al and Ga as if N=50%
+fig = plt.figure(num=13)
+fig.clear()
+ax = fig.gca()
+
+#ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')
+ax.errorbar(csr.flatten(),Ga_comp_glob.flatten(),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Ga %')
+ax.errorbar(csr.flatten(),Ga_comp_glob.flatten()/(2*(Ga_comp_glob.flatten()+Al_comp_glob.flatten())),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Ga N=50%')
+ax.errorbar(csr.flatten(),Al_comp_glob.flatten(),yerr=Al_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al %')
+ax.errorbar(csr.flatten(),Al_comp_glob.flatten()/(2*(Ga_comp_glob.flatten()+Al_comp_glob.flatten())),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al N=50%')
+ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
+#ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
+
+#ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
+ax.set(xlabel='CSR', ylabel='%', ylim=[0, 0.5], xlim=[0.1,10])
+ax.legend()
+ax.set_title('det radius and time based chunking')
+ax.set_xscale('log')
+ax.grid()       
+fig.tight_layout()
+fig.canvas.manager.window.raise_()
+
+
 # Plot stuff
-plt.close(13)
-fig, axs = plt.subplots(2,3,num=13)
+plt.close(14)
+fig, axs = plt.subplots(2,3,num=14)
 
 (c1,c2,csr1),(s1,s2,cts1) = axs
 
