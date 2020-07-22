@@ -162,9 +162,11 @@ def mod_geometric_bowl_correction(p_in,tof,x_det,y_det):
         (np.sqrt(1+r2/p_in[0]**2)   \
         *(1+p_in[1]*x_det+p_in[2]*y_det+p_in[3]*(r2/30**2)**2))
     
-    com0 = np.mean(tof)
-    com = np.mean(new_tof)
-    new_tof = (com0/com)*new_tof   
+#    new_tof = new_tof/np.sqrt(1+p_in[0]**2)
+    
+#    com0 = np.mean(tof)
+#    com = np.mean(new_tof)
+#    new_tof = (com0/com)*new_tof   
             
     return new_tof
  

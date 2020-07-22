@@ -46,7 +46,7 @@ ppd.pretty_print_compositions(compositions,pk_data)
 # Plot the full spectrum
 xs, ys_sm = GaN_fun.bin_and_smooth_spectrum(epos=epos,
                                             user_roi=[0,150],
-                                            bin_wid_mDa=30,
+                                            bin_wid_mDa=100,
                                             smooth_wid_mDa=-1)
 
 fig = plt.figure(num=1)
@@ -126,6 +126,11 @@ Al_comp_std_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
 
 tot_cts = np.full([N_time_chunks,N_ann_chunks],-1.0)
 
+
+glob_bg_cts_roi = np.full([N_time_chunks,N_ann_chunks],-1.0)
+tot_cts_roi = np.full([N_time_chunks,N_ann_chunks],-1.0)
+
+
 keys = list(pk_data.dtype.fields.keys())
 keys.remove('m2q')
 Ga_idx = keys.index('Ga')
@@ -140,6 +145,19 @@ for t_idx in np.arange(N_time_chunks):
         bg_frac_roi = [120,150]
         bg_frac = np.sum((sub_epos['m2q']>bg_frac_roi[0]) & (sub_epos['m2q']<bg_frac_roi[1])) \
                             / np.sum((epos['m2q']>bg_frac_roi[0]) & (epos['m2q']<bg_frac_roi[1]))        
+        
+        
+        
+        
+        xs, ys_sm = GaN_fun.bin_and_smooth_spectrum(epos=sub_epos,
+                                            user_roi=[0,150],
+                                            bin_wid_mDa=10,
+                                            smooth_wid_mDa=-1)
+        glob_bg = ppd.physics_bg(xs,glob_bg_param*bg_frac)    
+        
+        glob_bg_cts_roi[t_idx,a_idx] = np.sum(glob_bg)+np.sum(sub_epos['m2q']>150)
+#        tot_cts_roi[t_idx,a_idx] = np.sum(ys_sm)
+        tot_cts_roi[t_idx,a_idx] = sub_epos.size
         
         cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
                                             epos=sub_epos, 
@@ -166,6 +184,9 @@ for t_idx in np.arange(N_time_chunks):
         ppd.pretty_print_compositions(compositions,pk_data)
         print('COUNTS IN CHUNK: ',np.sum(cts['total']))
         tot_cts[t_idx,a_idx] = np.sum(cts['total'])
+        
+        
+        
 
 
 fig = plt.figure(num=11)
@@ -310,6 +331,37 @@ for i in np.arange(csr.size):
 
 # Make a 2D plot of CSR
 fig = GaN_fun.create_csr_2d_plots(epos, pk_params, Ga1p_idxs, Ga2p_idxs, fig_idx=500)
+
+
+
+
+
+
+
+
+
+
+
+#Plotting Al and Ga as if N=50%
+fig = plt.figure(num=99)
+fig.clear()
+ax = fig.gca()
+
+#ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')
+ax.plot(csr.flatten(),glob_bg_cts_roi.flatten()/tot_cts_roi.flatten(), 'o', label='tot_cts')
+#ax.plot(csr.flatten(),tot_cts.flatten(), 'o', label='tot_cts')
+#ax.plot(csr.flatten(),tot_cts_roi.flatten(), 'o', label='tot_cts_roi')
+#ax.plot(csr.flatten(),glob_bg_cts_roi.flatten(), 'o', label='glob_bg_cts_roi')
+
+
+#ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
+#ax.set(xlabel='CSR', ylabel='%', ylim=[0, 0.5], xlim=[0.1,10])
+ax.legend()
+ax.set_title('det radius and time based chunking')
+#ax.set_xscale('log')
+ax.grid()       
+fig.tight_layout()
+fig.canvas.manager.window.raise_()
 
 
 
