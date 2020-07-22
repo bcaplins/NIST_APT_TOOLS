@@ -54,10 +54,10 @@ fig.set_size_inches(w=6.69, h=3)
 fig.clear()
 ax = fig.gca()
 
-ax.plot(xs, ys_sm, lw=1, label='full spec')
+ax.plot(xs, ys_sm, lw=1, label='full spec',color='k')
 
 glob_bg = ppd.physics_bg(xs,glob_bg_param)    
-ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1)
+ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1,color='r')
 
 ax.set_xlim(0,100)
 ax.set_ylim(1e1,5e4)
