@@ -50,17 +50,17 @@ xs, ys_sm = GaN_fun.bin_and_smooth_spectrum(epos=epos,
                                             smooth_wid_mDa=-1)
 
 fig = plt.figure(num=1)
-fig.set_size_inches(w=6.69, h=3)
+fig.set_size_inches(w=3.5, h=2)
 fig.clear()
 ax = fig.gca()
 
-ax.plot(xs, ys_sm, lw=1, label='full spec')
+ax.plot(xs, ys_sm, lw=1, label='full spec',color='k')
 
 glob_bg = ppd.physics_bg(xs,glob_bg_param)    
-ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1)
+ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1,color='r')
 
 ax.set_xlim(0,80)
-ax.set_ylim(5e0,5e4)
+ax.set_ylim(1e1,5e4)
 ax.grid(b=True)
 ax.set(xlabel='m/z', ylabel='counts')
 ax.set_yscale('log')    
@@ -191,6 +191,7 @@ for t_idx in np.arange(N_time_chunks):
 
 fig = plt.figure(num=11)
 fig.clear()
+#fig.set_size_inches(w=3.345, h=3.345)
 ax = fig.gca()
 
 #ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')

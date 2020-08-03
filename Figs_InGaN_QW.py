@@ -93,6 +93,7 @@ epos['x'],epos['y'],epos['z'] = GaN_fun.rotate_data_flat(p,epos['x'],epos['y'],e
 # Z-ROIs TO TAKE COMPOSITIONS IN
 z_roi_qw = [1.5, 2.3]
 z_roi_buf = [7.5, 12.5]
+z_roi_gan = [3, 7]
 
 ## Plot the 'flat' interface to verify vector algebra didn't go awry
 #fig = plt.figure(num=11)
@@ -125,7 +126,7 @@ cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
 
 ppd.pretty_print_compositions(compositions,pk_data)
 
-# Plot the full spectrum
+# Plot the QW spectrum
 xs, ys_sm = GaN_fun.bin_and_smooth_spectrum(epos=sub_epos,
                                             user_roi=[0,150],
                                             bin_wid_mDa=30,
@@ -136,10 +137,10 @@ fig.set_size_inches(w=6.69, h=3)
 fig.clear()
 ax = fig.gca()
 
-ax.plot(xs, ys_sm, lw=1, label='QW spec')
+ax.plot(xs, ys_sm, lw=1, label='QW spec',color='k')
 
 glob_bg = ppd.physics_bg(xs,bg_frac*glob_bg_param)    
-ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1)
+ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1,color='r')
 
 ax.set_xlim(0,120)
 ax.set_ylim(1e0,1e3)
@@ -173,7 +174,7 @@ cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
 
 ppd.pretty_print_compositions(compositions,pk_data)
 
-# Plot the full spectrum
+# Plot the buffer spectrum
 xs, ys_sm = GaN_fun.bin_and_smooth_spectrum(epos=sub_epos,
                                             user_roi=[0,150],
                                             bin_wid_mDa=30,
@@ -184,10 +185,10 @@ fig.set_size_inches(w=6.69, h=3)
 fig.clear()
 ax = fig.gca()
 
-ax.plot(xs, ys_sm, lw=1, label='buffer spec')
+ax.plot(xs, ys_sm, lw=1, label='buffer spec',color='k')
 
 glob_bg = ppd.physics_bg(xs,bg_frac*glob_bg_param)    
-ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1)
+ax.plot(xs, glob_bg, lw=1, label='bg', alpha=1,color='r')
 
 ax.set_xlim(0,120)
 ax.set_ylim(1e0,1e4)
@@ -200,3 +201,48 @@ fig.tight_layout()
 fig.savefig('InGaN_buffer_spectrum.pdf')
 fig.savefig('InGaN_buffer_spectrum.jpg', dpi=300)
 
+# Calculate the barrier composition
+is_roi = (epos['z']>=z_roi_gan[0]) & (epos['z']<=z_roi_gan[1])
+sub_epos = epos[is_roi]
+
+bg_frac_roi = [120,150]
+bg_frac = np.sum((sub_epos['m2q']>bg_frac_roi[0]) & (sub_epos['m2q']<bg_frac_roi[1])) \
+                    / np.sum((epos['m2q']>bg_frac_roi[0]) & (epos['m2q']<bg_frac_roi[1]))
+
+# Count the peaks, local bg, and global bg.  Ignore the local bg based info
+cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
+        epos=sub_epos, 
+        pk_data=pk_data, 
+        pk_params=pk_params, 
+        glob_bg_param=glob_bg_param, 
+        bg_frac=bg_frac, 
+        noise_threshhold=2)
+
+ppd.pretty_print_compositions(compositions,pk_data)
+
+# Plot the barrier spectrum
+xs, ys_sm = GaN_fun.bin_and_smooth_spectrum(epos=sub_epos,
+                                            user_roi=[0,150],
+                                            bin_wid_mDa=30,
+                                            smooth_wid_mDa=-1)
+
+fig = plt.figure(num=4)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+
+ax.plot(xs, ys_sm, lw=1, label='barrier spec',color='k')
+
+glob_bg = ppd.physics_bg(xs,bg_frac*glob_bg_param)    
+ax.plot(xs, glob_bg, lw=1, label='bg$\pm', alpha=1,color='r')
+
+ax.set_xlim(0,120)
+ax.set_ylim(1e0,1e4)
+ax.grid(b=True)
+ax.set(xlabel='m/z', ylabel='counts')
+ax.set_yscale('log')    
+ax.legend()
+fig.tight_layout()
+
+fig.savefig('InGaN_barrier_spectrum.pdf')
+fig.savefig('InGaN_barrier_spectrum.jpg', dpi=300)
