@@ -175,8 +175,8 @@ xlim = [1e-2, 1e1]
 ax.set(xlabel='CSR', ylabel='Ga %', ylim=[0, 1], xlim=xlim)
 ax.plot(xlim,[0.5,0.5],'k--', label='nominal')
     
-ax.set_ylim(0.3,0.7)
-ax.legend()
+ax.set_ylim(0.35,0.65)
+#ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
 ax.grid(b=True)
