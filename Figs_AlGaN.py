@@ -354,7 +354,7 @@ ax.plot(csr.flatten(),glob_bg_cts_roi.flatten()/tot_cts_roi.flatten(), 'o', labe
 #ax.plot(csr.flatten(),glob_bg_cts_roi.flatten(), 'o', label='glob_bg_cts_roi')
 
 
-#ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
+ax.set(xlabel='CSR', ylabel='bg %', ylim=[0, 1], xlim=[5e-3,5])
 #ax.set(xlabel='CSR', ylabel='%', ylim=[0, 0.5], xlim=[0.1,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
