@@ -93,18 +93,18 @@ epos['x'],epos['y'],epos['z'] = GaN_fun.rotate_data_flat(p,epos['x'],epos['y'],e
 # Z-ROIs TO TAKE COMPOSITIONS IN
 z_roi_qw = [1.5, 2.3]
 z_roi_buf = [7.5, 12.5]
-z_roi_gan = [3, 7]
+z_roi_gan = [3, 6]
 
-## Plot the 'flat' interface to verify vector algebra didn't go awry
-#fig = plt.figure(num=11)
-#fig.clear()
-#ax = fig.gca()
-#ax.plot(epos['x'][is_In],epos['z'][is_In],'.')
-#ax.plot(epos['y'][is_In],epos['z'][is_In],'.')
+# Plot the 'flat' interface to verify vector algebra didn't go awry
+fig = plt.figure(num=11)
+fig.clear()
+ax = fig.gca()
+ax.plot(epos['x'][is_In],epos['z'][is_In],'.')
+ax.plot(epos['y'][is_In],epos['z'][is_In],'.')
 
-## Plot the ROIs for visual inspection
-#ax.fill([-8,-8, 8,8], [z_roi_qw[0], z_roi_qw[1], z_roi_qw[1], z_roi_qw[0]], color=[1,0,0,0.5]) 
-#ax.fill([-8,-8, 8,8], [z_roi_buf[0], z_roi_buf[1], z_roi_buf[1], z_roi_buf[0]], color=[1,0,0,0.5]) 
+# Plot the ROIs for visual inspection
+ax.fill([-8,-8, 8,8], [z_roi_qw[0], z_roi_qw[1], z_roi_qw[1], z_roi_qw[0]], color=[1,0,0,0.5]) 
+ax.fill([-8,-8, 8,8], [z_roi_buf[0], z_roi_buf[1], z_roi_buf[1], z_roi_buf[0]], color=[1,0,0,0.5]) 
 
 
 # Calculate the QW composition
