@@ -139,7 +139,7 @@ def do_counting(epos, pk_params, glob_bg_param):
         
     return cts 
 
-def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
+def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1, glob_bg_param=0):
 
     # Initialize a peak paramter array
     pk_params = np.full(peak_m2qs.size,-1,dtype=[('x0_nominal','f4'),
@@ -155,6 +155,11 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
                                                 ('loc_bg','f4')])
     pk_params['x0_nominal'] = peak_m2qs
     
+    
+    
+    
+    
+    
     full_roi = np.array([0, 150])
     xs_full_1mDa, ys_full_1mDa = bin_dat(epos['m2q'],user_roi=full_roi,isBinAligned=True)
     ys_full_5mDa_sm = do_smooth_with_gaussian(ys_full_1mDa, std=5)
@@ -163,20 +168,7 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
     ys_full_fwd_sm = forward_moving_average(ys_full_1mDa,n=N_kern)
     ys_full_bwd_sm = forward_moving_average(ys_full_1mDa,n=N_kern,reverse=True)
     
-    #ppd.do_smooth_with_gaussian(ys_full_1mDa, std=100)
-    #
-    #ys_fwd = np.roll(ys_full_50mDa_sm,50)
-    #ys_bwd = np.roll(ys_full_50mDa_sm,-50)
-    
-#    
-#    fig = plt.figure(num=222)
-#    fig.clear()
-#    ax = plt.axes()
-#    
-#    ax.plot(xs_full_1mDa,ys_full_1mDa,label='1 mDa bin')    
-#    ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='5 mDa smooth')    
-#    
-#    ax.grid('major')
+    ys_glob_bg_1mDa = physics_bg(xs_full_1mDa,glob_bg_param)
     
     # Get estiamtes for x0, amp, std_fit
     for idx,pk_param in enumerate(pk_params):
@@ -208,14 +200,17 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
         pk_lhs_idx = np.argmin(np.abs((pk_param['x0_mean_shift']-pk_param['std_fit'])-xs_full_1mDa))    
         pk_rhs_idx = np.argmin(np.abs((pk_param['x0_mean_shift']+pk_param['std_fit'])-xs_full_1mDa))
         
-        pk_amp = (pk_param['amp']+ys_full_5mDa_sm[pk_idx])/2
+        # Create a peak amplitude estimate.  I use the average of the gaussian amplitude and the 5 mDa smoothed data.
+        # Notice the gaussian amplitude has the baseline removed, and therefor I subtract the global background from the smoothed data.
+        pk_amp = 0.5*(pk_param['amp'] + ys_full_5mDa_sm[pk_idx]-ys_glob_bg_1mDa[pk_idx])
         
         curr_val = ys_full_5mDa_sm[pk_idx]
         
         for i in np.arange(pk_lhs_idx,-1,-1):
             curr_val = ys_full_5mDa_sm[i]        
-                
-            if (curr_val<peak_height_fraction*pk_amp) and (pk_param['pre_rng']<0):
+            
+            # Note that the global background is subtracted off the current value.  One day I should make this more general...
+            if ((curr_val-ys_glob_bg_1mDa[i]) < peak_height_fraction*pk_amp) and (pk_param['pre_rng']<0):
                 # This is a range limit
                 pk_param['pre_rng'] = xs_full_1mDa[i]
             
@@ -230,7 +225,7 @@ def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1):
         for i in np.arange(pk_rhs_idx,xs_full_1mDa.size):
             curr_val = ys_full_5mDa_sm[i]        
                 
-            if (curr_val<peak_height_fraction*pk_amp) and (pk_param['post_rng']<0):
+            if ((curr_val-ys_glob_bg_1mDa[i]) < peak_height_fraction*pk_amp) and (pk_param['post_rng']<0):
                 # This is a range limit
                 pk_param['post_rng'] = xs_full_1mDa[i]
             

@@ -461,14 +461,17 @@ def fit_spectrum(epos, pk_data, peak_height_fraction, bg_rois):
     Ga1p_idxs = [np.argmin(np.abs(m2q-pk_data['m2q'])) for m2q in Ga1p_m2qs]
     Ga2p_idxs = [np.argmin(np.abs(m2q-pk_data['m2q'])) for m2q in Ga2p_m2qs]
 
-    # Range the peaks
-    pk_params = ppd.get_peak_ranges(epos,pk_data['m2q'],peak_height_fraction=peak_height_fraction)
-        
     # Determine the global background    
     glob_bg_param = ppd.get_glob_bg(epos['m2q'],rois=bg_rois)
 
-    return (pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs)
+    # Range the peaks
+    pk_params = ppd.get_peak_ranges(epos,
+                                    pk_data['m2q'],
+                                    peak_height_fraction=peak_height_fraction,
+                                    glob_bg_param=0)    
     
+    return (pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs)
+
     
 def count_and_get_compositions(epos, pk_data, pk_params, glob_bg_param, bg_frac=1, noise_threshhold=2):
     import peak_param_determination as ppd
