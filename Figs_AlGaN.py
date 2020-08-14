@@ -436,13 +436,27 @@ ax.set_ylabel('ion 2 (m/z)')
 #for im in ax.get_images():
 #    im.set_clim(0, 1)
 
-lims = [0,100]
+lims = [0,80]
 ax.set(xlim=lims, ylim=lims)
 ax.set_title('Pairwise Correlation Histogram (log color scale)')
 fig.savefig('AlGaN_m2q_corr_hist.png')
 
 
 
+
+import initElements_P3
+ed = initElements_P3.initElements()
+
+m1 = ed['N'].isotopes[14][0]
+m2 = ed['Al'].isotopes[27][0]
+mp = (m1+m2)/2
+
+Vd_V0 = np.linspace(0,1,2**5)
+
+m1_eff = m1/(1-Vd_V0*(1-m1/mp))
+m2_eff = m2/(1-Vd_V0*(1-m2/mp))
+
+plt.plot(m1_eff,m2_eff,'w--', alpha=0.5)
 
 
 
