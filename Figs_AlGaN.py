@@ -202,7 +202,7 @@ ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
 ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 
 #ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
-ax.set(xlabel='CSR', ylabel='%', ylim=[0, 0.6], xlim=[0.1,10])
+ax.set(xlabel='CSR', ylabel='%', ylim=[0.2, 0.55], xlim=[0.1,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
@@ -230,7 +230,7 @@ ax.errorbar(csr.flatten(),N_comp_glob.flatten(),yerr=N_comp_std_glob.flatten(),f
 ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 
 #ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0, 1], xlim=[5e-3,5])
-ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0.2, 0.8], xlim=[0.1,10])
+ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0.2, 0.6], xlim=[0.1,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
