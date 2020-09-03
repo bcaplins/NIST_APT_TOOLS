@@ -20,7 +20,7 @@ plt.close('all')
 
 # Read in data
 epos = GaN_fun.load_epos(run_number='R20_07209', 
-                         epos_trim=[5000, 5000],
+                         epos_trim=[5001, 5000],
                          fig_idx=999)
 
 pk_data = GaN_type_peak_assignments.AlGaN()
