@@ -22,6 +22,85 @@ def create_histogram(xs,ys,x_roi=None,y_roi=None,num_x=128,num_y=128):
 # standard imports 
 
 
+
+def create_det_hit_plots_SI(epos, pk_data, pk_params, fig_idx=200):
+        
+    def create_axes(ax, sel_idxs,title):
+
+        NNN = 64
+        N,x_edges,y_edges = create_histogram(epos['x_det'][sel_idxs],epos['y_det'][sel_idxs],
+                                             x_roi=[-35,35],y_roi=[-35,35],
+                                             num_x=NNN, num_y=NNN)
+    
+        ax.imshow(np.transpose(N), aspect='auto', 
+                   extent=extents(x_edges) + extents(y_edges), origin='lower', cmap=cc.cm.CET_L8,
+                   interpolation='nearest')
+        ax.set_aspect('equal', 'box')
+        
+        ax.set(xlabel='$x_{detector}$ (mm)')
+        ax.set(ylabel='$y_{detector}$ (mm)')
+        ax.set_title(title)
+        
+        return
+    
+    
+    def create_axes_v2(ax, sel_idxs1,sel_idxs2,title):
+
+        NNN = 64
+        N1,x_edges,y_edges = create_histogram(epos['x_det'][sel_idxs1],epos['y_det'][sel_idxs1],
+                                             x_roi=[-35,35],y_roi=[-35,35],
+                                             num_x=NNN, num_y=NNN)
+        N2,x_edges,y_edges = create_histogram(epos['x_det'][sel_idxs2],epos['y_det'][sel_idxs2],
+                                             x_roi=[-35,35],y_roi=[-35,35],
+                                             num_x=NNN, num_y=NNN)
+        
+        
+    
+        ax.imshow(np.transpose(np.log10(N2/N1)), aspect='auto', 
+                   extent=extents(x_edges) + extents(y_edges), origin='lower', cmap=cc.cm.CET_L8,
+                   interpolation='nearest')
+        ax.set_aspect('equal', 'box')
+        
+        ax.set(xlabel='$x_{detector}$ (mm)')
+        ax.set(ylabel='$y_{detector}$ (mm)')
+        ax.set_title(title)
+        
+        return
+    
+    
+       
+    
+    fig = plt.figure(num=fig_idx)
+    fig.clear()    
+    fig, axes = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, num=fig_idx)
+    axes = axes.flatten()
+    
+    ax_idx = 0
+    
+    # Get all events
+    m2q_roi = [6, 120]
+    sel_idxs = np.where((epos['m2q']>m2q_roi[0]) & (epos['m2q']<m2q_roi[1]))
+    create_axes(axes[ax_idx],sel_idxs,'ion histogram m/z $\in$'+m2q_roi.__str__())
+    ax_idx += 1
+    
+    # CSR
+    HW = 0.3        
+    Ga1p = np.array([68.92, 70.92])
+    Ga2p = Ga1p/2
+        
+    sel_idxs1 = np.where(((epos['m2q']>(Ga1p[0]-HW)) & (epos['m2q']<(Ga1p[0]+HW))) \
+                         | ((epos['m2q']>(Ga1p[1]-HW)) & (epos['m2q']<(Ga1p[1]+HW))))
+    sel_idxs2 = np.where(((epos['m2q']>(Ga2p[0]-HW)) & (epos['m2q']<(Ga2p[0]+HW))) \
+                         | ((epos['m2q']>(Ga2p[1]-HW)) & (epos['m2q']<(Ga2p[1]+HW))))
+    
+    
+    create_axes_v2(axes[ax_idx],sel_idxs1,sel_idxs2,'CSR')
+    
+
+
+    return None            
+
+
 def create_det_hit_plots(epos, pk_data, pk_params, fig_idx=200):
         
     def create_axes(ax, sel_idxs,title):
