@@ -19,8 +19,8 @@ from histogram_functions import bin_dat
 plt.close('all')
 
 # Read in data
-epos = GaN_fun.load_epos(run_number='R20_07209', 
-                         epos_trim=[5001, 5000],
+epos = GaN_fun.load_epos(run_number='R20_07094', 
+                         epos_trim=[5000, 4998],
                          fig_idx=999)
 
 
@@ -96,23 +96,23 @@ ax.set_ylabel('ion 2 (m/z)')
 lims = [0,80]
 ax.set(xlim=lims, ylim=lims)
 ax.set_title('Pairwise Correlation Histogram (log color scale)')
-fig.savefig('AlGaN_m2q_corr_hist.png')
+fig.savefig('GaN_m2q_corr_hist.png')
 
 
 
 
-import initElements_P3
-ed = initElements_P3.initElements()
+#import initElements_P3
+#ed = initElements_P3.initElements()
+#
+#m1 = ed['N'].isotopes[14][0]
+#m2 = ed['Al'].isotopes[27][0]
+#mp = (m1+m2)/2
+#
+#Vd_V0 = np.linspace(0,1,2**5)
+#
+#m1_eff = m1/(1-Vd_V0*(1-m1/mp))
+#m2_eff = m2/(1-Vd_V0*(1-m2/mp))
+#
+#plt.plot(m1_eff,m2_eff,'w--', alpha=0.5)
 
-m1 = ed['N'].isotopes[14][0]
-m2 = ed['Al'].isotopes[27][0]
-mp = (m1+m2)/2
 
-Vd_V0 = np.linspace(0,1,2**5)
-
-m1_eff = m1/(1-Vd_V0*(1-m1/mp))
-m2_eff = m2/(1-Vd_V0*(1-m2/mp))
-
-plt.plot(m1_eff,m2_eff,'w--', alpha=0.5)
-
-fig.savefig('AlGaN_m2q_corr_hist.pdf')
