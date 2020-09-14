@@ -133,3 +133,32 @@ def GaN():
                                 ],
                                 dtype=[('N','i4'),('Ga','i4'),('m2q','f4')] )
     return pk_data
+
+def GaN_with_H():
+    #                           N      Ga  Da
+    # Define possible peaks
+    pk_data =   np.array(    [  (0,     0,  ed['H'].isotopes[1][0]),
+                                (0,     0,  ed['H'].isotopes[1][0]*2),
+                                (0,     0,  ed['H'].isotopes[1][0]*3),
+                                (1,     0,  ed['N'].isotopes[14][0]/2),
+                                (1,     0,  ed['N'].isotopes[14][0]/1),
+                                (1,     0,  ed['N'].isotopes[15][0]/1),
+                                (1,     0,  ed['N'].isotopes[15][0]+ed['H'].isotopes[1][0]),
+                                (0,     1,  ed['Ga'].isotopes[69][0]/3),
+                                (0,     1,  ed['Ga'].isotopes[71][0]/3),
+                                (2,     0,  ed['N'].isotopes[14][0]*2),
+                                (2,     0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]),
+                                (2,     0,  ed['N'].isotopes[14][0]+ed['N'].isotopes[15][0]+ed['H'].isotopes[1][0]),
+                                (0,     1,  ed['Ga'].isotopes[69][0]/2),
+                                (0,     1,  ed['Ga'].isotopes[71][0]/2),
+                                (1,     1,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[69][0])/2),
+                                (3,     0,  ed['N'].isotopes[14][0]*3),
+                                (1,     1,  (ed['N'].isotopes[14][0] + ed['Ga'].isotopes[71][0])/2),
+                                (3,     1,  (ed['Ga'].isotopes[69][0]+3*ed['N'].isotopes[14][0])/2),
+                                (3,     1,  (ed['Ga'].isotopes[71][0]+3*ed['N'].isotopes[14][0])/2),
+                                (0,     1,  ed['Ga'].isotopes[69][0]),
+                                (0,     1,  ed['Ga'].isotopes[71][0]),
+                                (0,     1,  ed['Ga'].isotopes[71][0]+ed['H'].isotopes[1][0])
+                                ],
+                                dtype=[('N','i4'),('Ga','i4'),('m2q','f4')] )
+    return pk_data

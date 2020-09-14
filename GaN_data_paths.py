@@ -36,6 +36,10 @@ def get_epos_path(run_number='R20_07094'):
     ben_data_dict['R20_07248'] = os.path.join(ben_wd,'R20_07248-v01.epos')
     ben_data_dict['R20_07249'] = os.path.join(ben_wd,'R20_07249-v01.epos')
     ben_data_dict['R20_07250'] = os.path.join(ben_wd,'R20_07250-v01.epos')
+    ben_data_dict['R20_07250'] = os.path.join(ben_wd,'R20_07250-v01.epos')
+    ben_data_dict['R20_07199_redo'] = os.path.join(ben_wd,'R20_07199-v07.epos')
+    
+    
     
     
     luis_wd = r'C:\Users\lnm\Documents\Div 686\Data'
@@ -49,6 +53,7 @@ def get_epos_path(run_number='R20_07094'):
     luis_data_dict['R20_07248'] = os.path.join(luis_wd, '190508_GaN_A84', 'R20_07248-v01.epos')
     luis_data_dict['R20_07249'] = os.path.join(luis_wd, '190508_GaN_A84', 'R20_07249-v01.epos')
     luis_data_dict['R20_07250'] = os.path.join(luis_wd, '190508_GaN_A84', 'R20_07250-v01.epos')
+    luis_data_dict['R20_07199_redo'] = os.path.join(luis_wd, '190406_InGaNQW_A82', 'R20_07199-v07.epos')
     
     
     if login_name == 'capli':

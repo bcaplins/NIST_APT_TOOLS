@@ -154,9 +154,12 @@ def create_sigma_delta_histogram(raw_tof, tof_vcorr_fac, tof_bcorr_fac, sigmas=N
 def interleave(a,b):
     return np.ravel(np.column_stack((a,b)))
 
+import GaN_type_peak_assignments
+
 
 
 plt.close('all')
+
 
 
 fn = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07148-v01.epos'
@@ -168,6 +171,15 @@ epos = apt_fileio.read_epos_numpy(fn)
 p_volt = np.array([])
 p_bowl = np.array([])
 
+# From singles only
+p_volt = np.array([ 1.06982237, -1.08553658])
+p_bowl = np.array([ 0.88200326,  0.57922266, -0.85765857, -3.27922886])
+
+# From multiples only
+p_volt = np.array([ 1.08397755, -1.05728506])
+p_bowl = np.array([ 0.88301537,  0.59019202, -0.85708329, -3.42046897])
+
+
 # only use singles for V+B
 singles_epos = epos[epos['ipp'] == 1]
 
@@ -175,24 +187,100 @@ singles_epos = epos[epos['ipp'] == 1]
 sub_idxs = np.random.choice(singles_epos.size, int(np.min([singles_epos.size, 1000*1000])), replace=False)
 sub_epos = singles_epos[sub_idxs]
 
-#_, p_volt, p_bowl = do_voltage_and_bowl(sub_epos,p_volt,p_bowl)        
+#tof_doubles_corr, p_volt, p_bowl = do_voltage_and_bowl(epos[epos['ipp'] != 1],p_volt,p_bowl)        
+tof_singles_corr = sub_epos['tof']\
+                *voltage_and_bowl.mod_full_voltage_correction(p_volt,
+                                                             np.ones_like(sub_epos['tof']),
+                                                             sub_epos['v_dc'])\
+              *voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,
+                                                              np.ones_like(sub_epos['tof']),
+                                                              sub_epos['x_det'],
+                                                              sub_epos['y_det'])
 
-p_volt = np.array([ 1.06982237, -1.08553658])
-p_bowl = np.array([ 0.88200326,  0.57922266, -0.85765857, -3.27922886])
 
 # for the moment we are working with doubles only for simplicity
 idxs = np.where(epos['ipp'] == 2)[0]
 idxs = sorted(np.concatenate((idxs,idxs+1)))
 epos_d = epos[idxs]
 
+ref_fn = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07094-v03.epos"
+ref_epos = apt_fileio.read_epos_numpy(ref_fn)
+
+m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_singles_corr)
+
+
+
+#def temp_fun(p_m2q,)
+
+
+
+m2q_corr = 1e-4*p_m2q[0]*np.square(epos['tof']\
+                *voltage_and_bowl.mod_full_voltage_correction(p_volt,
+                                                             np.ones_like(epos['tof']),
+                                                             epos['v_dc'])\
+              *voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,
+                                                              np.ones_like(epos['tof']),
+                                                              epos['x_det'],
+                                                              epos['y_det'])
+              -p_m2q[1])
+
+
+m2q_corr = 1e-4*p_m2q[0]*np.square(sub_epos['tof']\
+                *voltage_and_bowl.mod_full_voltage_correction(p_volt,
+                                                             np.ones_like(sub_epos['tof']),
+                                                             sub_epos['v_dc'])\
+              *voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,
+                                                              np.ones_like(sub_epos['tof']),
+                                                              sub_epos['x_det'],
+                                                              sub_epos['y_det'])
+              -p_m2q[1])
+
+
+plotting_stuff.plot_histo(ref_epos['m2q'], 33211233, clearFigure=True)
+plotting_stuff.plot_histo(m2q_corr, 33211233, clearFigure=False)
+
+
+def m2q_to_tof(m2q, p_m2q):
+    return np.sqrt(1e4*m2q/p_m2q[0])+p_m2q[1]
+
+
+
+import GaN_fun
+
+pk_data = GaN_type_peak_assignments.GaN_with_H()
+bg_rois=[[0.4,0.9]]
+
+pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs = GaN_fun.fit_spectrum(
+        epos=epos, 
+        pk_data=pk_data, 
+        peak_height_fraction=0.1, 
+        bg_rois=bg_rois)
+
+
+cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
+        epos=epos, 
+        pk_data=pk_data,
+        pk_params=pk_params, 
+        glob_bg_param=glob_bg_param, 
+        bg_frac=1, 
+        noise_threshhold=3)
+
+
+
+pk_times = m2q_to_tof(pk_params[is_peak.ravel()]['x0_mean_shift'], p_m2q)
+
+
+
 # find the voltage and bowl coefficients for the doubles data
 tof_vcorr_fac = voltage_and_bowl.mod_full_voltage_correction(p_volt,np.ones_like(epos_d['tof']),epos_d['v_dc'])
 tof_bcorr_fac = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_like(epos_d['tof']),epos_d['x_det'],epos_d['y_det'])
 
 
+N_SIGMA_PTS = 400
+DEL_SIGMA_PTS = 2000/N_SIGMA_PTS
 
 # create data delta sigma histogram
-sigmas = np.arange(800)*2.5
+sigmas = np.arange(N_SIGMA_PTS)*DEL_SIGMA_PTS
 res_dat, sigmas, deltas = create_sigma_delta_histogram(epos_d['tof'], 
                                                        tof_vcorr_fac, 
                                                        tof_bcorr_fac,
@@ -217,13 +305,13 @@ FoM = np.sum(res_dat**2, axis=1)
 max_idx = np.argmax(FoM)
 
 # create psf sigma delta histogram
-psf_sigmas = np.arange(1600)*2.5
+psf_sigmas = np.arange(2*N_SIGMA_PTS)*DEL_SIGMA_PTS
 
 sigma0 = np.mean(psf_sigmas)
-delta0 = np.median(deltas)
+delta0 = np.mean(deltas)
 
-t1 = 0.5*(sigma0-delta0)/(tof_vcorr_fac[0::2]*tof_bcorr_fac[0::2])+np.random.normal(loc=0, scale=0.50, size=epos_d.size//2)
-t2 = 0.5*(sigma0+delta0)/(tof_vcorr_fac[0::2]*tof_bcorr_fac[1::2])+np.random.normal(loc=0, scale=0.50, size=epos_d.size//2)
+t1 = 0.5*(sigma0-delta0+np.random.normal(loc=0, scale=0.50, size=epos_d.size//2))/(tof_vcorr_fac[0::2]*tof_bcorr_fac[0::2])
+t2 = 0.5*(sigma0+delta0+np.random.normal(loc=0, scale=0.50, size=epos_d.size//2))/(tof_vcorr_fac[0::2]*tof_bcorr_fac[1::2])
 psf_tof = interleave(t1,t2)
 
 
@@ -344,9 +432,16 @@ for d_idx,s_idx in zip(pks[:,1],pks[:,0]):
     ax.scatter(xdat[s_idx],ydat[s_idx])
     
     p_0 = [ xdat[s_idx], ydat[s_idx]-np.min(ydat), 150, np.min(ydat)]
-    p_opt, ier = leastsq(res_recip_decay, p_0, args=(xdat, ydat))
+    
+    lb = np.max([xdat[0], xdat[s_idx]-250])
+    ub = np.min([xdat[s_idx]+250, xdat[-1]])
+    
+    idxs = np.where((xdat>=lb) & (xdat<=ub))
+    
+    
+    p_opt, ier = leastsq(res_recip_decay, p_0, args=(xdat[idxs], ydat[idxs]))
 #    plt.plot(xdat,recip_decay(sigmas,*p_0))
-    plt.plot(xdat,recip_decay(sigmas,*p_opt))
+    plt.plot(xdat[idxs],recip_decay(xdat[idxs],*p_opt))
 
     
 
@@ -468,6 +563,19 @@ ax.set_ylabel('$\Sigma_c$')
 ax.set_title('Interpolating $\Sigma_c$ from $\Delta_c$')
 
 
+fig = plt.figure(777)
+plt.clf()
+ax = fig.gca()
+ax.plot(0.5*(sigmas_pts-deltas_pts),0.5*(sigmas_pts+deltas_pts),'o')
+ax.plot(0.5*(sigmas_pts+deltas_pts),0.5*(sigmas_pts-deltas_pts),'o')
+ax.plot(0.5*(sigmas_pts-deltas_pts),0.5*(sigmas_pts-deltas_pts))
+#ax.plot(deltas_pts,sigmas_pts,'o')        
+ax.set_aspect('equal', 'box')
+
+ax.set_xlabel('$t1$')
+ax.set_ylabel('$t2$')
+ax.set_title('Interpolating ...')
+
 
 
 sigs_mod = g(dts_mod)
@@ -506,19 +614,53 @@ ax2.axis('equal')
 ax2.set_xlabel('ns')
 ax2.set_ylabel('ns')
 
+a,b = np.meshgrid(pk_times,pk_times)
+
+ass,bss = np.meshgrid(pk_params['amp'][is_peak.ravel()]*pk_params['std_fit'][is_peak.ravel()],pk_params['amp'][is_peak.ravel()]*pk_params['std_fit'][is_peak.ravel()])
+
+w = .05*((ass*bss).ravel())
+
+idxs = np.where(w>np.median(w))
+
+ax2.scatter(a.ravel()[idxs],b.ravel()[idxs], s = w[idxs], alpha=0.4)
+
+diffs = pk_times-pk_times[:,None]
+diffs = np.abs(np.tril(diffs,0))
+#diffs = diffs[diffs!=0]
+
+sums = pk_times+pk_times[:,None]
+sums = np.abs(np.tril(sums,0))
+#sums = sums[sums!=0]
+
+
+idxs = np.where((w>np.median(w)) & (sums.ravel()>1) & (diffs.ravel()>1))
+idxs = np.where((sums.ravel()>1))
 
 
 
 
 
+ax = plt.figure(111).gca()
+
+ax.scatter(sums.ravel()[idxs],diffs.ravel()[idxs], s = w[idxs], alpha=0.5)
+
+
+#ax.scatter(sums, diffs )
 
 
 
+
+fig = plt.figure(2321)
+ax = fig.gca()
+
+tt1 = epos_vb_no_mod['tof'][0::2]
+tt2 = epos_vb_no_mod['tof'][1::2]
+
+ax.plot(tt1+tt2,tt2-tt1,'.')
 
 
 
 import sys 
-sys.exit()
 
 
 

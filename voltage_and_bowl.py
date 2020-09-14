@@ -49,16 +49,17 @@ def do_voltage_and_bowl(epos,p_volt,p_bowl):
     return (tof_corr, p_volt, p_bowl)
 
 
-def mod_full_voltage_correction(p_in,tof,v_dc):
+def mod_full_voltage_correction(p_in,tof,v_dc, nom_vdc=5500):
     SCALES = np.array([1e3, 1e-5])
     
     p_in = p_in*SCALES
     
-    new_tof = tof*np.sqrt(p_in[0]+v_dc+p_in[1]*v_dc**2)
+    new_tof = tof*np.sqrt(p_in[0]+v_dc+p_in[1]*v_dc**2)\
+                /np.sqrt(p_in[0]+nom_vdc+p_in[1]*nom_vdc**2)
     
-    com0 = np.mean(tof)
-    com = np.mean(new_tof)
-    new_tof = (com0/com)*new_tof
+#    com0 = np.mean(tof)
+#    com = np.mean(new_tof)
+#    new_tof = (com0/com)*new_tof
     
     return new_tof
 
@@ -91,16 +92,17 @@ def full_voltage_correction(tof,v_dc,p_guess,ROI,TOF_BIN_SIZE):
     return res.x
     
 
-def mod_basic_voltage_correction(p_in,tof,v_dc):
+def mod_basic_voltage_correction(p_in,tof,v_dc, nom_vdc=5500):
     SCALES = np.array([1e3])
     
     p_in = p_in*SCALES
         
-    new_tof = tof*np.sqrt(p_in[0]+v_dc)
+    new_tof = tof*np.sqrt(p_in[0]+v_dc)\
+                    /np.sqrt(p_in[0]+nom_vdc)
     
-    com0 = np.mean(tof)
-    com = np.mean(new_tof)
-    new_tof = (com0/com)*new_tof
+#    com0 = np.mean(tof)
+#    com = np.mean(new_tof)
+#    new_tof = (com0/com)*new_tof
     
     return new_tof
      
