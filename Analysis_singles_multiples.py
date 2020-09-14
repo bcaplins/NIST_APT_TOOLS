@@ -19,13 +19,13 @@ from histogram_functions import bin_dat
 plt.close('all')
 
 # Read in data
-epos = GaN_fun.load_epos(run_number='R20_07209', 
-                         epos_trim=[5000, 4998],
+epos = GaN_fun.load_epos(run_number='R20_07148', 
+                         epos_trim=[5000, 5000],
                          fig_idx=999)
 
-pk_data = GaN_type_peak_assignments.AlGaN()
 #pk_data = GaN_type_peak_assignments.GaN()
-
+pk_data = GaN_type_peak_assignments.Mg_doped_GaN()
+#pk_data = GaN_type_peak_assignments.AlGaN()
 
 bg_rois=[[0.4,0.9]]
 
@@ -36,13 +36,13 @@ pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs = GaN_fun.fit_spectrum(
         bg_rois=bg_rois)
 
 # all ions
-idxs = np.arange(epos.size)
+#idxs = np.arange(epos.size)
 
 # singles only
 #idxs = np.where(epos['ipp']==1)[0]
 
 # all multiples (no singles)
-#idxs = np.where(epos['ipp']!=1)[0]
+idxs = np.where(epos['ipp']!=1)[0]
 
 # doubles only
 #idxs = np.where(epos['ipp']==2)[0]
