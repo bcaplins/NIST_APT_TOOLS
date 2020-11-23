@@ -38,7 +38,7 @@ ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
 #fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
-fn = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07199-v07.epos"
+fn = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07104-v01.epos"
 
 epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[25000:-1]
