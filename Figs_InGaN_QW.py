@@ -19,7 +19,7 @@ from histogram_functions import bin_dat
 plt.close('all')
 
 # Read in data
-epos = GaN_fun.load_epos(run_number='R20_07199', 
+epos = GaN_fun.load_epos(run_number='R20_07199_redo', 
                          epos_trim=[5000, 5000],
                          fig_idx=999)
 
@@ -91,20 +91,33 @@ epos['x'],epos['y'],epos['z'] = GaN_fun.rotate_data_flat(p,epos['x'],epos['y'],e
 
 # USER DEFINED!!!
 # Z-ROIs TO TAKE COMPOSITIONS IN
-z_roi_qw = [1.5, 2.3]
-z_roi_buf = [7.5, 12.5]
-z_roi_gan = [3, 6]
+z_roi_qw = [3.0, 5.5]
+z_roi_buf = [14, 23]
+z_roi_gan = [6.5, 12.5]
+
+# Find all the Ga events
+is_Ga = ~np.isfinite(epos['m2q'])
+for pk,param in zip(pk_data,pk_params):
+    if pk['Ga']>0:
+        is_Ga = is_Ga | ((epos['m2q']>=param['pre_rng']) & (epos['m2q']<=param['post_rng']))
+
+import colorcet as cc    
+cm=cc.cm.glasbey
 
 # Plot the 'flat' interface to verify vector algebra didn't go awry
 fig = plt.figure(num=11)
 fig.clear()
 ax = fig.gca()
-ax.plot(epos['x'][is_In],epos['z'][is_In],'.')
-ax.plot(epos['y'][is_In],epos['z'][is_In],'.')
+#ax.plot(epos['x'][is_In],epos['z'][is_In],'.')
+#ax.plot(epos['y'][is_In],epos['z'][is_In],'.')
+ax.plot(epos['x'][is_Ga],epos['z'][is_Ga],'.', alpha=0.05, color=cm(2), ms=2)
+ax.plot(epos['x'][is_In],epos['z'][is_In],'.', alpha=0.5, color=cm(10), ms=2)
+
 
 # Plot the ROIs for visual inspection
 ax.fill([-8,-8, 8,8], [z_roi_qw[0], z_roi_qw[1], z_roi_qw[1], z_roi_qw[0]], color=[1,0,0,0.5]) 
 ax.fill([-8,-8, 8,8], [z_roi_buf[0], z_roi_buf[1], z_roi_buf[1], z_roi_buf[0]], color=[1,0,0,0.5]) 
+ax.fill([-8,-8, 8,8], [z_roi_gan[0], z_roi_gan[1], z_roi_gan[1], z_roi_gan[0]], color=[1,0,0,0.5]) 
 
 
 # Calculate the QW composition
