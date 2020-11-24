@@ -13,28 +13,13 @@ import peak_param_determination as ppd
 
 from histogram_functions import bin_dat
 from voltage_and_bowl import do_voltage_and_bowl
+from voltage_and_bowl import mod_full_vb_correction
 import voltage_and_bowl
 
 import colorcet as cc
-from skimage import restoration
 
-
-def find_lines_center(slope, intercept, weight=None):    
-    if weight is None:
-        weight = np.ones_like(slope)
-    
-    sigma_WM = np.sum(weight*slope)
-    sigma_WMM = np.sum(weight*slope**2) 
-    sigma_WMB = np.sum(weight*slope*intercept)
-    sigma_WB = np.sum(weight*intercept)
-    sigma_W = np.sum(weight)
-    
-    x_min = (sigma_WM*sigma_WB/sigma_W - sigma_WMB)/(sigma_WMM-sigma_WM**2/sigma_W)        
-    y_min = (x_min*sigma_WM+sigma_WB)/sigma_W
-            
-    return (x_min, y_min)
-
-
+#import sys
+#sys.exit(0)
 
 def create_histogram(xs, ys, x_roi=None, delta_x=0.1, y_roi=None, delta_y=0.1):
     """Create a 2d histogram of the data, specifying the bin intensity, region
@@ -53,9 +38,14 @@ def _extents(f):
     return [f[0] - delta/2, f[-1] + delta/2]
 
 
-def plot_2d_histo(ax, N, x_edges, y_edges):
+def plot_2d_histo(ax, N, x_edges, y_edges, scale='log'):
+    if scale=='log':
+        dat = np.log10(1+N)
+    elif scale=='lin':
+        dat = N
+            
     """Helper function to plot a histogram on an axis"""
-    ax.imshow(np.log10(1+np.transpose(N)), aspect='auto',
+    ax.imshow(np.transpose(dat), aspect='auto',
               extent=_extents(x_edges) + _extents(y_edges),
               origin='lower', cmap=cc.cm.CET_L8,
               interpolation='nearest')
@@ -170,6 +160,130 @@ def calc_slope_and_intercept(raw_tof, volt_coeff, bowl_coeff):
 def compute_dist_to_line(slope, intercept, x, y):    
     return np.abs(intercept+slope*x-y)/np.sqrt(1+slope**2)
 
+
+
+
+def calc_parametric_line(raw_tof, volt_coeff, bowl_coeff, n=2):
+    
+    if n>0:
+        t = raw_tof.reshape(-1,n)        
+        v = volt_coeff.reshape(-1,n)
+        b = bowl_coeff.reshape(-1,n)
+    else:
+        t = raw_tof
+        v = volt_coeff
+        b = bowl_coeff
+        
+         
+    r0 = v*b*(t-np.sum(b*t,axis=1)[:,np.newaxis]/np.sum(b,axis=1)[:,np.newaxis])
+    r1 = b/np.sum(b,axis=1)[:,np.newaxis]
+    
+    return (r0, r1)
+
+def compute_dist_to_parametric_line(r0, r1, q):    
+    # q is n_pts by n_dim
+    sigma = (np.dot(r1,q.T)-np.sum(r0*r1,axis=1)[:,np.newaxis])/np.sum(r1**2,axis=1)[:,np.newaxis]        
+    d = np.sqrt(np.sum(((r0[:,np.newaxis,:]+np.einsum("np,nd->npd",sigma,r1))-q[np.newaxis,...])**2, axis=-1))
+    return d, sigma
+
+#from itertools import combinations, chain
+#from scipy.special import comb
+#def comb_index(n, k):
+#    count = comb(n, k, exact=True)
+#    index = np.fromiter(chain.from_iterable(combinations(range(n), k)), 
+#                        int, count=count*k)
+#    return index.reshape(-1, k)
+
+def cartesian_product(arrays):
+    ndim = len(arrays)
+    return np.stack(np.meshgrid(*arrays), axis=-1).reshape(-1, ndim)
+
+#
+#def recusively_split_multihit(remaining_times, volt_coeff, bowl_coeff, pk_times, time_groupings=None):
+#    if time_groupings is None:
+#        time_groupings = [];
+#        
+#    n = remaining_times.size
+#    
+#
+#    
+#    if n==1:
+#        time_groupings.append(remaining_times)
+#    
+#    if n<2:
+#        return time_groupings
+#    
+#    THRESH = 2
+#    MAX_K = 2 # pk_coords will overflow for k too big!
+#    for k in range(min(n,MAX_K),1,-1):
+#        pk_coords = cartesian_product([pk_times for i in range(k)])
+#        possible_idxs = comb_index(n, k)
+#        r0, r1 = calc_parametric_line(remaining_times[possible_idxs],
+#                                      volt_coeff[possible_idxs],
+#                                      bowl_coeff[possible_idxs],
+#                                      n=-1)
+#        diff_mat, sigmas = compute_dist_to_parametric_line(r0, r1, pk_coords)
+#        min_idx = np.unravel_index(np.argmin(diff_mat, axis=None), diff_mat.shape)
+#        min_d = diff_mat[min_idx]
+#        
+#        if min_d<THRESH:
+#            grouped_idxs = possible_idxs[min_idx[0]]            
+#            ungrouped_idxs = np.setdiff1d(np.arange(n), grouped_idxs)
+#           
+#            time_groupings.append(remaining_times[grouped_idxs])
+#                      
+#            return recusively_split_multihit(remaining_times[ungrouped_idxs],
+#                                      volt_coeff[ungrouped_idxs],
+#                                      bowl_coeff[ungrouped_idxs],
+#                                      pk_times,
+#                                      time_groupings)
+#        else:
+#            if k==2:
+#                for i in range(n):
+#                    time_groupings.append(np.array(remaining_times[i]))
+#                return time_groupings
+#
+#    return
+#
+#multi_idxs = np.where(epos['ipp']>1)[0]
+#
+#import time
+#start = time.time()
+#ct = 0
+#for ev_idx in multi_idxs:
+#    ct += 1
+#    n = epos['ipp'][ev_idx]
+#    idxs = slice(ev_idx,ev_idx+n)
+#    q = recusively_split_multihit(epos['tof'][idxs], tof_vcorr_fac_all[idxs], tof_bcorr_fac_all[idxs], pk_times)
+#    print(str(q)+'\n')
+#    if ct>100:
+#        break
+#end = time.time()
+#print(multi_idxs.size*(end - start)/ct)
+#
+#
+#
+#
+#dts = []
+#for ev_idx in multi_idxs:
+#    idxs = slice(ev_idx,ev_idx+n)
+#    dts.append(np.diff(epos['tof'][idxs]))
+#
+#dts = np.concatenate(dts)
+#
+#
+#plt.figure(321)
+#plt.hist(dts,bins=np.arange(0,1000,0.25))
+
+
+
+
+
+
+
+
+
+
 import GaN_type_peak_assignments
 
 
@@ -177,42 +291,514 @@ import GaN_type_peak_assignments
 plt.close('all')
 
 
-
-fn = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07148-v01.epos'
-#fn = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\R20_07080-v01_vbmq_corr.epos'
 fn = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07094-v03.epos'
-
 epos = apt_fileio.read_epos_numpy(fn)
+
+# Split out data into single and doubles
+sing_idxs = np.where(epos['ipp'] == 1)[0]
+epos_s = epos[sing_idxs]
+
+tmp_idxs = np.where(epos['ipp'] == 2)[0]
+doub_idxs = np.ravel(np.column_stack([tmp_idxs+i for i in range(2)]))
+epos_d = epos[doub_idxs]
 
 # voltage and bowl correct ToF data.  
 p_volt = np.array([])
 p_bowl = np.array([])
 
-# From singles only
-p_volt = np.array([ 1.06982237, -1.08553658])
-p_bowl = np.array([ 0.88200326,  0.57922266, -0.85765857, -3.27922886])
-
-# From multiples only
-p_volt = np.array([ 1.20008432, -0.53736018])
-p_bowl = np.array([ 0.89399828,  0.55893658, -0.87657925, -2.62400478])
-
-
 # only use singles for V+B
-singles_epos = epos[epos['ipp'] == 1]
-
 # subsample down to 1 million ions for speedier computation
-sub_idxs = np.random.choice(singles_epos.size, int(np.min([singles_epos.size, 1000*1000])), replace=False)
-sub_epos = singles_epos[sub_idxs]
+vb_idxs = np.random.choice(epos_s.size, int(np.min([epos_s.size, 1000*1000])), replace=False)
+vb_epos = epos_s[vb_idxs]
 
-#tof_doubles_corr, p_volt, p_bowl = do_voltage_and_bowl(epos[epos['ipp'] != 1],p_volt,p_bowl)        
-tof_singles_corr = sub_epos['tof']\
-                *voltage_and_bowl.mod_full_voltage_correction(p_volt,
-                                                              np.ones_like(sub_epos['tof']),
-                                                              sub_epos['v_dc'])\
-                *voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,
-                                                                np.ones_like(sub_epos['tof']),
-                                                                sub_epos['x_det'],
-                                                                sub_epos['y_det'])
+tof_sing_corr, p_volt, p_bowl = do_voltage_and_bowl(vb_epos,p_volt,p_bowl)        
+
+tof_vcorr_fac = voltage_and_bowl.mod_full_voltage_correction(p_volt,np.ones_like(epos['tof']),epos['v_dc'])
+tof_bcorr_fac = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_like(epos['tof']),epos['x_det'],epos['y_det'])
+
+# find the voltage and bowl coefficients for the doubles data
+tof_vcorr_fac_d = tof_vcorr_fac[doub_idxs]
+tof_bcorr_fac_d = tof_bcorr_fac[doub_idxs]
+
+
+# Find transform to m/z space
+m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(epos_s['m2q'],tof_sing_corr)
+epos['m2q'] = m2q_calib.mod_physics_m2q_calibration(p_m2q,mod_full_vb_correction(epos,p_volt,p_bowl))
+
+plotting_stuff.plot_histo(epos['m2q'],fig_idx=1)
+
+import GaN_fun
+
+pk_data = GaN_type_peak_assignments.GaN_with_H()
+bg_rois=[[0.4,0.9]]
+
+pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs = GaN_fun.fit_spectrum(
+        epos=epos, 
+        pk_data=pk_data, 
+        peak_height_fraction=0.1, 
+        bg_rois=bg_rois)
+
+
+cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
+        epos=epos, 
+        pk_data=pk_data,
+        pk_params=pk_params, 
+        glob_bg_param=glob_bg_param, 
+        bg_frac=1, 
+        noise_threshhold=3)
+
+ppd.pretty_print_compositions(compositions,pk_data)
+
+def m2q_to_tof(m2q, p_m2q):
+    return np.sqrt(1e4*m2q/p_m2q[0])+p_m2q[1]
+
+pk_m2qs = pk_params[is_peak.ravel()]['x0_mean_shift']
+pk_times = m2q_to_tof(pk_m2qs, p_m2q)
+
+
+
+# Fit out the 2D histogram
+pk_params_2d = np.zeros((pk_times.size,pk_times.size), dtype={'names':('t1','t2','sigma','amp','cts'),
+                          'formats':('f8','f8','f8','f8','i8')})
+
+
+
+
+epos_d_vb = epos_d.copy()
+epos_d_vb['tof'] = mod_full_vb_correction(epos_d,p_volt,p_bowl)
+
+edges, ch = corrhist(epos_d_vb,roi = [0, 1000], delta=1)
+centers = (edges[1:]+edges[:-1])/2.0
+
+fig2 = plt.figure(num=3)
+fig2.clf()
+ax2 = fig2.gca()   
+plot_2d_histo(ax2, ch, edges, edges, scale='log')
+ax2.axis('equal')
+ax2.axis('square')
+ax2.set_xlabel('ns')
+ax2.set_ylabel('ns')
+
+for pk_idx1 in range(pk_times.size):
+    for pk_idx2 in range(pk_times.size):
+        # Get ROI of data
+        t1g = pk_times[pk_idx1]
+        t2g = pk_times[pk_idx2]
+        
+        pk_params_2d['t1'][pk_idx1,pk_idx2] = t1g
+        pk_params_2d['t2'][pk_idx1,pk_idx2] = t2g
+                
+        win_wid = 3
+        
+        roi_1 = t1g+[-win_wid/2, win_wid/2]
+        roi_2 = t2g+[-win_wid/2, win_wid/2]
+        
+        roi_idxs1 = np.where((centers>roi_1[0]) & (centers<=roi_1[1]))[0]
+        roi_idxs2 = np.where((centers>roi_2[0]) & (centers<=roi_2[1]))[0]
+        
+        tmp = ch[roi_idxs1[0]:roi_idxs1[-1],roi_idxs2[0]:roi_idxs2[-1]]
+        
+        pk_params_2d['cts'][pk_idx1,pk_idx2] = tmp.sum()
+        
+#        if(tmp.sum()>1000):
+#            plt.matshow(tmp, fignum=332211, cmap=cc.cm.CET_L8)
+#            plt.pause(0.1)
+
+
+upper_tri_idxs = np.triu_indices_from(pk_params_2d,k=1)
+pk_params_2d = pk_params_2d[upper_tri_idxs]
+
+is_nonzero_idxs = np.where(pk_params_2d['cts']>16)[0]
+
+pk_sigma = pk_params_2d['t2'][is_nonzero_idxs]+pk_params_2d['t1'][is_nonzero_idxs]
+pk_delta = pk_params_2d['t2'][is_nonzero_idxs]-pk_params_2d['t1'][is_nonzero_idxs]
+pk_amp = pk_params_2d['cts'][is_nonzero_idxs]
+
+
+pk_coords = cartesian_product([pk_times for i in range(2)])
+
+
+
+#tofin = epos_d['tof']
+
+THRESH = 2
+
+multi_idx = np.where(epos['ipp']>=2)[0]
+tofin = np.zeros((np.sum(epos['ipp'][multi_idx]-1), 2))
+vcorr_fac_in = np.zeros((np.sum(epos['ipp'][multi_idx]-1), 2))
+bcorr_fac_in = np.zeros((np.sum(epos['ipp'][multi_idx]-1), 2))
+
+ct = 0
+for idx in multi_idx:
+    n = epos['ipp'][idx]    
+    tofin[ct:ct+n-1,0] = epos['tof'][idx:idx+n-1]
+    tofin[ct:ct+n-1,1] = epos['tof'][idx+1:idx+n]
+    vcorr_fac_in[ct:ct+n-1,0] = tof_vcorr_fac[idx:idx+n-1]
+    vcorr_fac_in[ct:ct+n-1,1] = tof_vcorr_fac[idx+1:idx+n]
+    bcorr_fac_in[ct:ct+n-1,0] = tof_bcorr_fac[idx:idx+n-1]
+    bcorr_fac_in[ct:ct+n-1,1] = tof_bcorr_fac[idx+1:idx+n]
+    ct += n-1
+       
+r0,r1 = calc_parametric_line(tofin, vcorr_fac_in, bcorr_fac_in, n=-1)
+diff_mat, sigmas = compute_dist_to_parametric_line(r0, r1, pk_coords)
+
+min_idxs = np.argmin(diff_mat,axis=1)
+min_d = np.min(diff_mat,axis=1)
+closest_sums = sigmas[range(sigmas.shape[0]), min_idxs]
+closest_sums[min_d>THRESH] = 957
+
+corr_dat = r0+r1*closest_sums[:,np.newaxis]
+
+plotting_stuff.plot_histo(corr_dat[:,1]-corr_dat[:,0],fig_idx=332211,user_xlim=[-0,1000], user_bin_width=0.5, clearFigure=True)
+#
+#plotting_stuff.plot_histo(corr_dat[min_d<THRESH,1]-corr_dat[min_d<THRESH,0],fig_idx=332211,user_xlim=[-0,5000], user_bin_width=0.5, clearFigure=True)
+#plotting_stuff.plot_histo(corr_dat[min_d>=THRESH,1]-corr_dat[min_d>=THRESH,0],fig_idx=332211,user_xlim=[-0,5000], user_bin_width=0.5, clearFigure=False)
+
+
+closest_sums[:] = 957
+corr_dat = r0+r1*closest_sums[:,np.newaxis]
+plotting_stuff.plot_histo(corr_dat[:,1]-corr_dat[:,0],fig_idx=332211,user_xlim=[-0,1000], user_bin_width=0.5, clearFigure=False)
+
+
+
+
+
+
+dd = np.random.exponential(size=tofin.size//2, scale=300.0)
+ss = 10000.0*np.random.rand(tofin.size//2)
+ttt1 = (ss-dd)/2
+ttt2 = (ss+dd)/2
+tofin[:,0] = ttt1
+tofin[:,1] = ttt2
+    
+
+  
+r0,r1 = calc_parametric_line(tofin, vcorr_fac_in, bcorr_fac_in, n=-1)
+diff_mat, sigmas = compute_dist_to_parametric_line(r0, r1, pk_coords)
+
+min_idxs = np.argmin(diff_mat,axis=1)
+min_d = np.min(diff_mat,axis=1)
+closest_sums = sigmas[range(sigmas.shape[0]), min_idxs]
+closest_sums[min_d>THRESH] = 957
+
+
+corr_dat = r0+r1*closest_sums[:,np.newaxis]
+
+tmp = epos_d['tof']*tof_bcorr_fac_d*tof_vcorr_fac_d
+plotting_stuff.plot_histo(tmp[1::2]-tmp[::2],fig_idx=332211,user_xlim=[-0,1000], user_bin_width=0.5, clearFigure=False)
+
+
+
+
+
+
+
+
+plotting_stuff.plot_histo(corr_dat[:,1]-corr_dat[:,0],
+                          fig_idx=332211,
+                          user_xlim=[-0,1000],
+                          user_bin_width=0.5,
+                          clearFigure=False,
+                          scale_factor=0.1)
+
+
+
+
+
+
+
+closest_sums[:] = 957
+corr_dat = r0+r1*closest_sums[:,np.newaxis]
+plotting_stuff.plot_histo(corr_dat[:,1]-corr_dat[:,0],
+                          fig_idx=332211,
+                          user_xlim=[-0,1000],
+                          user_bin_width=0.5,
+                          clearFigure=False,
+                          scale_factor=0.1)
+
+
+for line in plt.gca().lines:
+    line.set_linewidth(2.)
+
+
+
+
+
+
+
+
+
+import sys
+sys.exit(0)
+
+plt.figure(23231)
+plt.clf()
+
+
+plt.scatter(pk_coords[:,0], pk_coords[:,1],s = None, color='r')
+ri = r0+r1*0
+rf = r0+r1*1400
+
+for i in np.arange(2048):
+    plt.plot([ri[i,0], rf[i,0]], [ri[i,1], rf[i,1]],'b', alpha=0.1)
+    
+#    plt.plot(corr_dat[i,0],corr_dat[i,1],'g.')
+#    plt.plot(pk_coords[min_idxs[i],0],pk_coords[min_idxs[i],1],'g.')
+
+    plt.plot([corr_dat[i,0],pk_coords[min_idxs[i],0]],[corr_dat[i,1],pk_coords[min_idxs[i],1]],'g', alpha=0.1)
+#    plt.pause(1)
+
+plt.gcf().gca().set_aspect('equal', adjustable='box')
+
+plotting_stuff.plot_histo(corr_dat[:,1]-corr_dat[:,0],fig_idx=33221122,user_xlim=[-0,1000], user_bin_width=0.5, clearFigure=False)
+
+plt.figure()
+plt.plot(corr_dat[:,0],corr_dat[:,1],',')
+plt.scatter(pk_coords[:,0], pk_coords[:,1],s = None, color='r')
+
+
+tof_vcorr_fac3 = voltage_and_bowl.mod_full_voltage_correction(p_volt,np.ones_like(epos_t['tof']),epos_t['v_dc'])
+tof_bcorr_fac3 = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_like(epos_t['tof']),epos_t['x_det'],epos_t['y_det'])
+
+aa,bb,cc = np.meshgrid(pk_times,pk_times,pk_times)
+
+pk_coords = np.vstack((aa.ravel(),bb.ravel(),cc.ravel())).T
+
+#pk_coords = np.vstack((pk_params_2d['t1'][is_nonzero_idxs],pk_params_2d['t2'][is_nonzero_idxs])).T
+
+r0,r1 = calc_parametric_line(epos_t['tof'], tof_vcorr_fac3, tof_bcorr_fac3, n=3)
+diff_mat, sigmas = compute_dist_to_parametric_line(r0, r1, pk_coords)
+
+
+min_idxs = np.argmin(diff_mat,axis=1)
+closest_sums = sigmas[range(sigmas.shape[0]), min_idxs]
+
+
+corr_dat = r0+r1*closest_sums[:,np.newaxis]
+
+
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+#plt.gcf().gca().set_aspect('equal', adjustable='box')
+
+ax.plot(corr_dat[:,1]-corr_dat[:,0],corr_dat[:,2]-corr_dat[:,1],corr_dat[:,2]-corr_dat[:,0],'o', ms=1, alpha = 0.2)
+
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+
+xxx = corr_dat[:,1]-corr_dat[:,0]
+yyy = corr_dat[:,2]-corr_dat[:,1]
+zzz = corr_dat[:,2]-corr_dat[:,0]
+
+plotting_stuff.plot_histo(np.concatenate((xxx,yyy,zzz)), fig_idx=-1, user_xlim=[0,1000], user_bin_width=0.25)
+
+
+plt.figure()
+plt.plot(xxx,yyy,',')
+
+
+
+
+plotting_stuff.plot_histo(corr_dat[:],fig_idx=332211,user_xlim=[-0,1000], user_bin_width=.5, clearFigure=False)
+
+
+plotting_stuff.plot_histo(tof_sing_corr,fig_idx=332211,user_xlim=[-0,1000], user_bin_width=.5, clearFigure=False)
+
+
+
+
+
+tof_vcorr_fac_all = voltage_and_bowl.mod_full_voltage_correction(p_volt,np.ones_like(epos['tof']),epos['v_dc'])
+tof_bcorr_fac_all = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_like(epos['tof']),epos['x_det'],epos['y_det'])
+plotting_stuff.plot_histo(epos['tof']*tof_vcorr_fac_all*tof_bcorr_fac_all,fig_idx=332211,user_xlim=[-0,1000], user_bin_width=.5, clearFigure=False)
+
+
+tof_vcorr_fac4 = voltage_and_bowl.mod_full_voltage_correction(p_volt,np.ones_like(epos_4['tof']),epos_4['v_dc'])
+tof_bcorr_fac4 = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_like(epos_4['tof']),epos_4['x_det'],epos_4['y_det'])
+
+aa,bb,cc,dd = np.meshgrid(pk_times,pk_times,pk_times,pk_times)
+
+pk_coords = np.vstack((aa.ravel(),bb.ravel(),cc.ravel(),dd.ravel())).T
+
+#pk_coords = np.vstack((pk_params_2d['t1'][is_nonzero_idxs],pk_params_2d['t2'][is_nonzero_idxs])).T
+
+r0,r1 = calc_parametric_line(epos_4['tof'], tof_vcorr_fac4, tof_bcorr_fac4, n=4)
+diff_mat, sigmas = compute_dist_to_parametric_line(r0, r1, pk_coords)
+
+
+min_idxs = np.argmin(diff_mat,axis=1)
+closest_sums = sigmas[range(sigmas.shape[0]), min_idxs]
+
+
+corr_dat = r0+r1*closest_sums[:,np.newaxis]
+
+plotting_stuff.plot_histo(corr_dat[:],fig_idx=332211,user_xlim=[-0,1000], user_bin_width=.5, clearFigure=False)
+
+
+
+
+
+
+slope, intercept = calc_slope_and_intercept(epos_d['tof'], tof_vcorr_fac, tof_bcorr_fac)
+
+diff_mat = compute_dist_to_line(slope[:,None], intercept[:,None], pk_sigma, pk_delta)
+
+sig = 0.25*6
+g = lambda x : np.exp(-x**2/(2*sig**2))
+
+probs = pk_amp*g(diff_mat)
+probs = probs/np.max(probs)
+max_idxs = np.argmax(probs,axis=1)
+largest_prob = np.max(probs,axis=1)
+
+
+closest_sums = pk_sigma[range(pk_sigma.shape[0]), max_idxs]
+
+closest_sums[largest_prob<1e-16] = np.sum(pk_amp*pk_sigma)/np.sum(pk_amp)
+
+#
+#
+#exs = np.arange(1,128)
+#
+#cc = [closest_sums[largest_prob<10.0**(-1*ex)].size for ex in exs]
+
+
+
+#closest_sums[min_dist>4] = np.random.uniform(0,2000,min_dist.shape)[min_dist>4]
+#closest_sums[0,min_dist>4] = np.full(min_dist.shape,550.0)[min_dist>4]
+
+extrapolated_diffs = slope*closest_sums+intercept
+
+#extrapolated_diffs = slope*(np.sum(pk_amp*pk_sigma)/np.sum(pk_amp))+intercept
+#plotting_stuff.plot_histo(extrapolated_diffs,fig_idx=9952341, user_xlim=[0,8000],user_bin_width=0.25)
+#
+#min_idxs = np.argmin(diff_mat,axis=1)
+#closest_sums = pk_sigma[min_idxs]
+#
+#extrapolated_diffs = slope*closest_sums+intercept
+
+
+#
+#vbd = epos_d_vb['tof'][1::2]-epos_d_vb['tof'][0::2]
+#vbs = epos_d_vb['tof'][1::2]+epos_d_vb['tof'][0::2]
+#
+#q_idxs = np.where(vbs<1400)[0]
+#
+#plotting_stuff.plot_histo(vbd[q_idxs ],fig_idx=9952341, user_xlim=[0,800],user_bin_width=0.25,clearFigure=False)
+#
+#
+#plotting_stuff.plot_histo(extrapolated_diffs[q_idxs ],fig_idx=9952341, user_xlim=[0,800],user_bin_width=0.25,clearFigure=False)
+#
+
+
+
+#        
+## find the voltage and bowl coefficients for the doubles data
+#tof_vcorr_fac = voltage_and_bowl.mod_full_voltage_correction(p_volt,np.ones_like(epos_d['tof']),epos_d['v_dc'])
+#tof_bcorr_fac = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_like(epos_d['tof']),epos_d['x_det'],epos_d['y_det'])
+#
+#
+#
+#slope, intercept = calc_slope_and_intercept(epos_d['tof'], tof_vcorr_fac, tof_bcorr_fac)
+#
+#intercept = np.random.random(intercept.shape)*1000
+#
+#diff_mat = compute_dist_to_line(slope[:,None], intercept[:,None], pk_sigma, pk_delta)
+#
+#sig = 0.25
+#g = lambda x : np.exp(-x**2/(2*sig**2))
+#
+#probs = pk_amp*g(diff_mat)
+#probs = probs/np.max(probs)
+#max_idxs = np.argmax(probs,axis=1)
+#largest_prob = np.max(probs,axis=1)
+#
+#
+min_idxs = np.argmin((diff_mat**2)/1,axis=1)
+#
+#closest_sums = pk_sigma[max_idxs]
+closest_sums = pk_sigma[min_idxs]
+
+#closest_sums[largest_prob<1e-16] = np.sum(pk_amp*pk_sigma)/np.sum(pk_amp)
+
+#
+#
+#exs = np.arange(1,128)
+#
+#cc = [closest_sums[largest_prob<10.0**(-1*ex)].size for ex in exs]
+
+
+
+#closest_sums[min_dist>4] = np.random.uniform(0,2000,min_dist.shape)[min_dist>4]
+#closest_sums[0,min_dist>4] = np.full(min_dist.shape,550.0)[min_dist>4]
+
+#extrapolated_diffs = slope*closest_sums+intercept
+
+#extrapolated_diffs = slope*(np.sum(pk_amp*pk_sigma)/np.sum(pk_amp))+intercept
+#plotting_stuff.plot_histo(extrapolated_diffs,fig_idx=9952341, user_xlim=[0,8000],user_bin_width=0.25)
+#
+#min_idxs = np.argmin(diff_mat,axis=1)
+#closest_sums = pk_sigma[min_idxs]
+#
+#extrapolated_diffs = slope*closest_sums+intercept
+
+
+
+
+
+plotting_stuff.plot_histo(extrapolated_diffs,fig_idx=9952341, user_xlim=[0,800],user_bin_width=.25,clearFigure=False)
+
+
+
+tt = epos_d['tof']*tof_bcorr_fac*tof_vcorr_fac
+tt1 = tt[::2] 
+tt2 = tt[1::2]
+plotting_stuff.plot_histo(tt2-tt1,fig_idx=9952341, user_xlim=[0,800],user_bin_width=.25,clearFigure=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+t1 = (closest_sums[largest_prob>1e-16]-extrapolated_diffs[largest_prob>1e-16])/2
+t2 = (closest_sums[largest_prob>1e-16]+extrapolated_diffs[largest_prob>1e-16])/2
+
+ts = interleave(t1,t2)
+
+plotting_stuff.plot_histo(ts,fig_idx=332211, user_xlim=[0,1000],user_bin_width=.25, clearFigure=False)
+#plotting_stuff.plot_histo(epos_d['tof'][sel_idxs]*tof_vcorr_fac[sel_idxs]*tof_bcorr_fac[sel_idxs],fig_idx=11152341, user_xlim=[0,1000],user_bin_width=1, clearFigure=False)
+plotting_stuff.plot_histo(tof_sing_corr,fig_idx=11152341, user_xlim=[0,1000],user_bin_width=1, clearFigure=False)
+
+
+
+
+
+
+fig = plt.figure(num=321311)
+fig.clf()
+ax = fig.gca()
+
+ax.scatter(closest_sums,extrapolated_diffs,marker=',', s= 1)
+
+
+
+
+
+
+
+
+
 
 
 # for the moment we are working with doubles only for simplicity
@@ -220,8 +806,7 @@ idxs = np.where(epos['ipp'] == 2)[0]
 idxs = sorted(np.concatenate((idxs,idxs+1)))
 epos_d = epos[idxs]
 
-ref_fn = r"C:\Users\capli\Google Drive\NIST\pos_and_epos_files\GaN_manuscript\R20_07094-v03.epos"
-ref_epos = apt_fileio.read_epos_numpy(ref_fn)
+
 
 m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_singles_corr)
 
@@ -246,7 +831,6 @@ def m2q_to_tof(m2q, p_m2q):
     return np.sqrt(1e4*m2q/p_m2q[0])+p_m2q[1]
 
 
-import GaN_fun
 
 pk_data = GaN_type_peak_assignments.GaN_with_H()
 bg_rois=[[0.4,0.9]]
@@ -404,7 +988,16 @@ ax.set_ylabel('$\Delta_c$ (ns)')
 ax.set_title('histogram (counts)')
 
 #ax.scatter(sigmas[pks['y_peak']], deltas[pks['x_peak']] )
-ax.scatter(sigmas[pks[:,0]], deltas[pks[:,1]] )
+#ax.scatter(sigmas[pks[:,0]], deltas[pks[:,1]] )
+thresh = 0
+ax.scatter(pk_params_2d[pk_params_2d['cts']>thresh]['t1']+pk_params_2d[pk_params_2d['cts']>thresh]['t2'],
+           pk_params_2d[pk_params_2d['cts']>thresh]['t2']-pk_params_2d[pk_params_2d['cts']>thresh]['t1'],
+           s = pk_params_2d[pk_params_2d['cts']>thresh]['cts']+5,
+           color=[1,1,1,0.5])
+
+
+
+
 
 
 
@@ -695,6 +1288,9 @@ ax2.axis('equal')
 ax2.set_xlabel('ns')
 ax2.set_ylabel('ns')
 
+
+epos_vb_no_mod = epos_d.copy()
+epos_vb_no_mod['tof'] = epos_d['tof']*tof_bcorr_fac*tof_vcorr_fac
 
 edges, ch = corrhist(epos_vb_no_mod,roi = [0, 5000], delta=2)
 fig2 = plt.figure(num=3)

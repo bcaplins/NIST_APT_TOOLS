@@ -18,9 +18,16 @@ from histogram_functions import bin_dat
 
 plt.close('all')
 
+def counter_g():
+    count = 0
+    while True:
+        yield count
+        count += 1
+counter = counter_g()
+        
+        
 
-
-def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num):
+def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num, multi_fig_num):
     # Read in data
     epos = GaN_fun.load_epos(run_number=run_number, 
                              epos_trim=[5000, 5000],
@@ -53,9 +60,12 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num):
     
     fig = plt.figure(num=spec_fig_num)
     ax = fig.gca()    
-    ax.plot(xs, ys_sm, lw=1, label=run_number)    
+    
+    scale_factor = 100**next(counter)
+    
+    ax.plot(xs, scale_factor*(ys_sm+1), lw=1, label=run_number)    
     glob_bg = ppd.physics_bg(xs,glob_bg_param)    
-    ax.plot(xs, glob_bg, lw=1, label=run_number+' (bg)', alpha=1)
+    ax.plot(xs, scale_factor*(glob_bg+1), lw=1, label=run_number+' (bg)', alpha=1)
     
     
     
@@ -93,6 +103,9 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num):
     Ga_comp_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
     Ga_comp_std_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
     
+    # Multiplicy
+    hit_multiplicity = np.full([N_time_chunks,N_ann_chunks],-1.0)
+    
     tot_cts = np.full([N_time_chunks,N_ann_chunks],-1.0)
     
     keys = list(pk_data.dtype.fields.keys())
@@ -123,6 +136,10 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num):
             Ga_comp_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][0][Ga_idx]
             Ga_comp_std_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][1][Ga_idx]
             
+            
+            low_mz_idxs = np.where(sub_epos['m2q']<100)[0]
+            hit_multiplicity[t_idx,a_idx] = np.sum(sub_epos[low_mz_idxs]['ipp']!=1)/sub_epos[low_mz_idxs].size
+            
             compositions = ppd.do_composition(pk_data,cts)
 #            ppd.pretty_print_compositions(compositions,pk_data)
 #            print('COUNTS IN CHUNK: ',np.sum(cts['total']))
@@ -135,6 +152,15 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num):
     
     #ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')
     ax.errorbar(csr.flatten(),Ga_comp_glob.flatten(),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label=run_number)
+    
+    fig = plt.figure(num=multi_fig_num)
+    #fig.clear()
+    ax = fig.gca()
+    ax.plot(csr.flatten(),hit_multiplicity.flatten(),'.', label=run_number)
+    
+    
+    
+    
     # Write data to console for copy/pasting
     print('CSR','\t','Ga comp (glob bg)','\t','Ga comp std (glob bg)')
     for i in np.arange(csr.size):
@@ -146,6 +172,10 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num):
 
 csr_fig = plt.figure()
 csr_fig.set_size_inches(w=3.345, h=3.345)
+
+multi_fig = plt.figure()
+multi_fig.set_size_inches(w=3.345, h=3.345)
+ 
  
 spec_fig = plt.figure()
 spec_fig.set_size_inches(w=6.69, h=3)
@@ -156,16 +186,20 @@ spec_fig.set_size_inches(w=6.69, h=3)
 #         spec_fig_num=spec_fig.number) # 'Template'
 CSR_plot(run_number='R20_07247',
          comp_csr_fig_idx=csr_fig.number,
-         spec_fig_num=spec_fig.number) # CSR ~ 2
+         spec_fig_num=spec_fig.number,
+         multi_fig_num=multi_fig.number) # CSR ~ 2
 CSR_plot(run_number='R20_07248',
          comp_csr_fig_idx=csr_fig.number,
-         spec_fig_num=spec_fig.number) # CSR ~ 2
+         spec_fig_num=spec_fig.number,
+         multi_fig_num=multi_fig.number)# CSR ~ 2
 CSR_plot(run_number='R20_07249',
          comp_csr_fig_idx=csr_fig.number,
-         spec_fig_num=spec_fig.number) # CSR ~ 0.5
+         spec_fig_num=spec_fig.number,
+         multi_fig_num=multi_fig.number) # CSR ~ 0.5
 CSR_plot(run_number='R20_07250',
          comp_csr_fig_idx=csr_fig.number,
-         spec_fig_num=spec_fig.number) # CSR ~ 0.1
+         spec_fig_num=spec_fig.number,
+         multi_fig_num=multi_fig.number) # CSR ~ 0.1
 
 ax = csr_fig.gca()
 
@@ -187,11 +221,30 @@ csr_fig.savefig('GaN_CSR_plot.jpg', dpi=300)
 
     
 
+ax = multi_fig.gca()
+
+#xlim = [5e-3, 5]
+xlim = [1e-2, 1e1]
+
+ax.set(xlabel='CSR', ylabel='multihit frac.', ylim=[0, 1], xlim=xlim)
+    
+ax.set_ylim(0,0.65)
+#ax.legend()
+ax.set_title('det radius and time based chunking')
+ax.set_xscale('log')
+ax.grid(b=True)
+multi_fig.tight_layout()
+
+multi_fig.savefig('GaN_CSR_multi_plot.pdf')
+multi_fig.savefig('GaN_CSR_multi_plot.jpg', dpi=300)
+
+
+
 ax = spec_fig.gca()
 
 
 ax.set_xlim(0,120)
-ax.set_ylim(1,5e4)
+ax.set_ylim(1,5e10)
 ax.grid(b=True)
 ax.set(xlabel='m/z', ylabel='counts')
 ax.set_yscale('log')    

@@ -25,7 +25,7 @@ plt.close('all')
 
 # Read in template spectrum
 #ref_fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\Final EPOS for APL Mat Paper\R20_07263-v02.epos"
-ref_fn = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\SiO2_Nov092020\R20_07276-v03.epos'
+ref_fn = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\SiO2_Nov092020\R44_03376-v01.epos'
 
 ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #ref_epos = ref_epos[130000:]
@@ -64,10 +64,38 @@ print("time to voltage and bowl correct:    "+str(time.time()-t_i)+" seconds")
 # Find c and t0 for ToF data based on aligning to reference spectrum
 m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr)
 #
-import sel_align_m2q_log_xcorr
-pointwise_scales,piecewise_scales = sel_align_m2q_log_xcorr.get_all_scale_coeffs(m2q_corr,
+
+
+found_peak_m2qs = [1.54, 2.65, 9.68, 16, 21.2, 30, 40.66,  54.7]
+ref_peak_m2qs = [1, 2, 9.32, 16, 21.98, 31.99, 43.98, 59.96]
+
+from scipy.interpolate import interp1d
+
+f = interp1d(found_peak_m2qs,ref_peak_m2qs,
+                 kind='linear',
+                 copy=True,
+                 fill_value='extrapolate',
+                 assume_sorted=False)
+
+
+m2q_corr2 = f(m2q_corr)
+
+epos['m2q'] = m2q_corr2[:]
+
+
+#
+#
+#
+#
+#
+apt_fileio.write_epos_numpy(epos,r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\SiO2_Nov092020\R44_03376-v01_vb.epos')
+import sys
+sys.exit(0)
+
+import scaling_correction
+pointwise_scales,piecewise_scales = scaling_correction.get_all_scale_coeffs(m2q_corr,
                                                                                  m2q_roi=[0.5,75],
-                                                                                 cts_per_slice=2**8,
+                                                                                 cts_per_slice=2**10,
                                                                                  max_scale=1.15)
 # Compute corrected data
 m2q_corr_q = m2q_corr/pointwise_scales

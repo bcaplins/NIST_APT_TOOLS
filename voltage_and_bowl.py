@@ -9,6 +9,16 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.optimize import brute
 
+def mod_full_vb_correction(epos, p_volt, p_bowl):
+    return epos['tof']\
+                *mod_full_voltage_correction(p_volt,
+                                              np.ones_like(epos['tof']),
+                                              epos['v_dc'])\
+                *mod_geometric_bowl_correction(p_bowl,
+                                                np.ones_like(epos['tof']),
+                                                epos['x_det'],
+                                                epos['y_det'])
+
 
 def do_voltage_and_bowl(epos,p_volt,p_bowl):
 

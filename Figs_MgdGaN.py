@@ -18,12 +18,15 @@ from histogram_functions import bin_dat
 
 plt.close('all')
 
-# Read in data
-epos = GaN_fun.load_epos(run_number='R20_07148', 
+# Read in data 
+#epos = GaN_fun.load_epos(run_number='R20_07104', 
+epos = GaN_fun.load_epos(run_number='R20_07148',
                          epos_trim=[5000, 5000],
                          fig_idx=999)
 
 pk_data = GaN_type_peak_assignments.Mg_doped_GaN()
+pk_data = pk_data[0:-1]
+
 bg_rois=[[0.4,0.9]]
 #bg_rois=[[10,11]]
 

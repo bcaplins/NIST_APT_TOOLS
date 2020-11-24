@@ -36,7 +36,7 @@ def get_epos_path(run_number='R20_07094'):
     ben_data_dict['R20_07248'] = os.path.join(ben_wd,'R20_07248-v01.epos')
     ben_data_dict['R20_07249'] = os.path.join(ben_wd,'R20_07249-v01.epos')
     ben_data_dict['R20_07250'] = os.path.join(ben_wd,'R20_07250-v01.epos')
-    ben_data_dict['R20_07250'] = os.path.join(ben_wd,'R20_07250-v01.epos')
+    ben_data_dict['R20_07104'] = os.path.join(ben_wd,'R20_07104-v01.epos')
     ben_data_dict['R20_07199_redo'] = os.path.join(ben_wd,'R20_07199-v07.epos')
     
     
