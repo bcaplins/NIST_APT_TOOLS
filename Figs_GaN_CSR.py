@@ -18,7 +18,14 @@ from histogram_functions import bin_dat
 
 plt.close('all')
 
-
+def counter_g():
+    count = 0
+    while True:
+        yield count
+        count += 1
+counter = counter_g()
+        
+        
 
 def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num, multi_fig_num):
     # Read in data
@@ -53,9 +60,12 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num, multi_fig_num):
     
     fig = plt.figure(num=spec_fig_num)
     ax = fig.gca()    
-    ax.plot(xs, ys_sm, lw=1, label=run_number)    
+    
+    scale_factor = 100**next(counter)
+    
+    ax.plot(xs, scale_factor*(ys_sm+1), lw=1, label=run_number)    
     glob_bg = ppd.physics_bg(xs,glob_bg_param)    
-    ax.plot(xs, glob_bg, lw=1, label=run_number+' (bg)', alpha=1)
+    ax.plot(xs, scale_factor*(glob_bg+1), lw=1, label=run_number+' (bg)', alpha=1)
     
     
     
@@ -234,7 +244,7 @@ ax = spec_fig.gca()
 
 
 ax.set_xlim(0,120)
-ax.set_ylim(1,5e4)
+ax.set_ylim(1,5e10)
 ax.grid(b=True)
 ax.set(xlabel='m/z', ylabel='counts')
 ax.set_yscale('log')    
