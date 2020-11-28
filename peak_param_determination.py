@@ -139,7 +139,7 @@ def do_counting(epos, pk_params, glob_bg_param):
         
     return cts 
 
-def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.1, glob_bg_param=0):
+def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.01, glob_bg_param=0):
 
     # Initialize a peak paramter array
     pk_params = np.full(peak_m2qs.size,-1,dtype=[('x0_nominal','f4'),
