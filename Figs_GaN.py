@@ -40,6 +40,11 @@ cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
         bg_frac=1, 
         noise_threshhold=2)
 
+
+csr = np.sum(cts['total'][Ga2p_idxs]-cts['global_bg'][Ga2p_idxs])/np.sum(cts['total'][Ga1p_idxs]-cts['global_bg'][Ga1p_idxs])
+print('Overall CSR: '+str(csr))
+
+
 # Print out the composition of the full dataset
 ppd.pretty_print_compositions(compositions,pk_data)
 
