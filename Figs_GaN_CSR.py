@@ -61,7 +61,7 @@ def CSR_plot(run_number, comp_csr_fig_idx, spec_fig_num, multi_fig_num):
     fig = plt.figure(num=spec_fig_num)
     ax = fig.gca()    
     
-    scale_factor = 100**next(counter)
+    scale_factor = 1E4**next(counter)
     
     ax.plot(xs, scale_factor*(ys_sm+1), lw=1, label=run_number)    
     glob_bg = ppd.physics_bg(xs,glob_bg_param)    
@@ -209,7 +209,7 @@ xlim = [1e-2, 1e1]
 ax.set(xlabel='CSR', ylabel='Ga %', ylim=[0, 1], xlim=xlim)
 ax.plot(xlim,[0.5,0.5],'k--', label='nominal')
     
-ax.set_ylim(0.35,0.65)
+ax.set_ylim(0.4,0.6)
 #ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
@@ -244,7 +244,7 @@ ax = spec_fig.gca()
 
 
 ax.set_xlim(0,120)
-ax.set_ylim(1,5e10)
+ax.set_ylim(1,5e16)
 ax.grid(b=True)
 ax.set(xlabel='m/z', ylabel='counts')
 ax.set_yscale('log')    

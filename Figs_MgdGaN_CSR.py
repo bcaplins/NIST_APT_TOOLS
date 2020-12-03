@@ -18,12 +18,12 @@ from histogram_functions import bin_dat
 
 plt.close('all')
 
-# Read in data R20_07209
-epos = GaN_fun.load_epos(run_number='R20_07209', 
-                         epos_trim=[5001, 5000],
+# Read in data R20_07148
+epos = GaN_fun.load_epos(run_number='R20_07148', 
+                         epos_trim=[5000, 1500000],
                          fig_idx=999)
 
-pk_data = GaN_type_peak_assignments.AlGaN()
+pk_data = GaN_type_peak_assignments.Mg_doped_GaN()
 bg_rois=[[0.4,0.9]]
 
 pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs = GaN_fun.fit_spectrum(
@@ -67,8 +67,8 @@ ax.set_yscale('log')
 ax.legend()
 fig.tight_layout()
 
-fig.savefig('AlGaN_full_spectrum.pdf')
-fig.savefig('AlGaN_full_spectrum.jpg', dpi=300)
+#fig.savefig('AlGaN_full_spectrum.pdf')
+#fig.savefig('AlGaN_full_spectrum.jpg', dpi=300)
 
 
 
@@ -101,7 +101,7 @@ ax.add_artist(a_circle)
 time_chunk_centers,r_centers,idxs_list = GaN_fun.chop_data_rad_and_time(epos,
                                                                         [xc[-1],
                                                                          yc[-1]],
-                                                                         time_chunk_size=2**16,
+                                                                         time_chunk_size=2**18,
                                                                          N_ann_chunks=3)
 
 N_time_chunks = time_chunk_centers.size
@@ -119,10 +119,10 @@ Ga_comp_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
 Ga_comp_std_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
 
 N_comp_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
-Al_comp_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
+Mg_comp_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
 
 N_comp_std_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
-Al_comp_std_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
+Mg_comp_std_glob = np.full([N_time_chunks,N_ann_chunks],-1.0)
 
 tot_cts = np.full([N_time_chunks,N_ann_chunks],-1.0)
 
@@ -134,7 +134,7 @@ tot_cts_roi = np.full([N_time_chunks,N_ann_chunks],-1.0)
 keys = list(pk_data.dtype.fields.keys())
 keys.remove('m2q')
 Ga_idx = keys.index('Ga')
-Al_idx = keys.index('Al')
+Mg_idx = keys.index('Mg')
 N_idx = keys.index('N')
 
 for t_idx in np.arange(N_time_chunks):
@@ -178,8 +178,8 @@ for t_idx in np.arange(N_time_chunks):
         N_comp_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][0][N_idx]
         N_comp_std_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][1][N_idx]
         
-        Al_comp_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][0][Al_idx]
-        Al_comp_std_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][1][Al_idx]
+        Mg_comp_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][0][Mg_idx]
+        Mg_comp_std_glob[t_idx,a_idx] = ppd.do_composition(pk_data,cts)[2][1][Mg_idx]
         
         ppd.pretty_print_compositions(compositions,pk_data)
         print('COUNTS IN CHUNK: ',np.sum(cts['total']))
@@ -196,13 +196,13 @@ ax = fig.gca()
 
 #ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')
 ax.errorbar(csr.flatten(),Ga_comp_glob.flatten(),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Ga %')
-ax.errorbar(csr.flatten(),Al_comp_glob.flatten(),yerr=Al_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al %')
+#ax.errorbar(csr.flatten(),Mg_comp_glob.flatten(),yerr=Mg_comp_std_glob.flatten(),fmt='.',capsize=4, label='Mg %')
 ax.errorbar(csr.flatten(),N_comp_glob.flatten(),yerr=N_comp_std_glob.flatten(),fmt='.',capsize=4, label='N %')
-ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
+#ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
 ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 
 #ax.set(xlabel='CSR', ylabel='%', ylim=[0, 1], xlim=[5e-3,5])
-ax.set(xlabel='CSR', ylabel='%', ylim=[0.2, 0.55], xlim=[0.1,10])
+ax.set(xlabel='CSR', ylabel='%', ylim=[0.35, 0.65], xlim=[0.01,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
@@ -210,8 +210,8 @@ ax.grid()
 fig.tight_layout()
 fig.canvas.manager.window.raise_()
 
-fig.savefig('AlGaN_CSR.pdf')
-fig.savefig('AlGaN_CSR.jpg', dpi=300)
+fig.savefig('MgdGaN_CSR.pdf')
+fig.savefig('MgdGaN_CSR.jpg', dpi=300)
 
 
 fig = plt.figure(num=12)
@@ -220,8 +220,8 @@ ax = fig.gca()
 
 #ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')
 ax.errorbar(csr.flatten(),
-            Ga_comp_glob.flatten()+Al_comp_glob.flatten(),
-            yerr=np.sqrt(Ga_comp_std_glob**2+Al_comp_std_glob**2).
+            Ga_comp_glob.flatten()+Mg_comp_glob.flatten(),
+            yerr=np.sqrt(Ga_comp_std_glob**2+Mg_comp_std_glob**2).
             flatten(),
             fmt='.',
             capsize=4, label='Ga+Al')
@@ -230,7 +230,7 @@ ax.errorbar(csr.flatten(),N_comp_glob.flatten(),yerr=N_comp_std_glob.flatten(),f
 ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 
 #ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0, 1], xlim=[5e-3,5])
-ax.set(xlabel='CSR', ylabel='Ga + Al %', ylim=[0.2, 0.6], xlim=[0.1,10])
+ax.set(xlabel='CSR', ylabel='Ga + Mg %', ylim=[0.2, 0.6], xlim=[0.1,10])
 ax.legend()
 ax.set_title('det radius and time based chunking')
 ax.set_xscale('log')
@@ -247,9 +247,9 @@ ax = fig.gca()
 
 #ax.errorbar(csr.flatten(),Ga_comp.flatten(),yerr=Ga_comp_std.flatten(),fmt='.',capsize=4,label='det based (radial)')
 ax.errorbar(csr.flatten(),Ga_comp_glob.flatten(),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Ga %')
-ax.errorbar(csr.flatten(),Ga_comp_glob.flatten()/(2*(Ga_comp_glob.flatten()+Al_comp_glob.flatten())),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Ga N=50%')
-ax.errorbar(csr.flatten(),Al_comp_glob.flatten(),yerr=Al_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al %')
-ax.errorbar(csr.flatten(),Al_comp_glob.flatten()/(2*(Ga_comp_glob.flatten()+Al_comp_glob.flatten())),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al N=50%')
+ax.errorbar(csr.flatten(),Ga_comp_glob.flatten()/(2*(Ga_comp_glob.flatten()+Mg_comp_glob.flatten())),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Ga N=50%')
+ax.errorbar(csr.flatten(),Mg_comp_glob.flatten(),yerr=Mg_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al %')
+ax.errorbar(csr.flatten(),Mg_comp_glob.flatten()/(2*(Ga_comp_glob.flatten()+Mg_comp_glob.flatten())),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4, label='Al N=50%')
 ax.plot([np.min(csr),np.max(csr)],[0.25,0.25],'k--')
 #ax.plot([np.min(csr),np.max(csr)],[0.5,0.5],'k--')
 

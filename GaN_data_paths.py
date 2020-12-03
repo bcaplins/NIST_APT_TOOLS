@@ -48,6 +48,7 @@ def get_epos_path(run_number='R20_07094'):
     luis_data_dict['R20_07094'] = os.path.join(luis_wd, '180821_GaN_A71', 'R20_07094-v03.epos')
     luis_data_dict['R20_07148'] = os.path.join(luis_wd, '181210_D315_A74', 'R20_07148-v01.epos')
     luis_data_dict['R20_07199'] = os.path.join(luis_wd, '190406_InGaNQW_A82', 'R20_07199-v03.epos')
+    luis_data_dict['R44_03146'] = os.path.join(luis_wd, '190406_InGaNQW_A82', 'R44_03146.epos')
     luis_data_dict['R20_07209'] = os.path.join(luis_wd, '190421_AlGaN50p7_A83', 'R20_07209-v01.epos')
     luis_data_dict['R20_07247'] = os.path.join(luis_wd, '190508_GaN_A84', 'R20_07247.epos')
     luis_data_dict['R20_07248'] = os.path.join(luis_wd, '190508_GaN_A84', 'R20_07248-v01.epos')

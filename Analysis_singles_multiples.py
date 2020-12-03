@@ -36,13 +36,13 @@ pk_params, glob_bg_param, Ga1p_idxs, Ga2p_idxs = GaN_fun.fit_spectrum(
         bg_rois=bg_rois)
 
 # all ions
-idxs = np.arange(epos.size)
+#idxs = np.arange(epos.size)
 
 # singles only
 #idxs = np.where(epos['ipp']==1)[0]
 
 # all multiples (no singles)
-#idxs = np.where(epos['ipp']!=1)[0]
+idxs = np.where(epos['ipp']!=1)[0]
 
 # doubles only
 #idxs = np.where(epos['ipp']==2)[0]
