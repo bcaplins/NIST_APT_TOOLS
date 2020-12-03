@@ -259,3 +259,156 @@ fig.tight_layout()
 
 fig.savefig('InGaN_barrier_spectrum.pdf')
 fig.savefig('InGaN_barrier_spectrum.jpg', dpi=300)
+
+
+
+# Adding a section to plot the CSR and Ga+N vs reconstructed z-coordinate
+
+
+chunk_centers, idxs_list = GaN_fun.chop_data_z(epos,chunk_edges_nm=np.arange(1,24,1))
+
+csr = np.full([len(idxs_list)],-1.0)
+
+avg_z = np.full([len(idxs_list)],-1.0)
+avg_voltage = np.full([len(idxs_list)],-1.0)
+
+# Gallium atomic % and standard deviation (no bg)
+Ga_comp = np.full([len(idxs_list)],-1.0)
+Ga_comp_std = np.full([len(idxs_list)],-1.0)
+
+N_comp = np.full([len(idxs_list)],-1.0)
+N_comp_std = np.full([len(idxs_list)],-1.0)
+
+
+Ga_comp_glob = np.full([len(idxs_list)],-1.0)
+Ga_comp_std_glob = np.full([len(idxs_list)],-1.0)
+
+N_comp_glob = np.full([len(idxs_list)],-1.0)
+N_comp_std_glob = np.full([len(idxs_list)],-1.0)
+
+hit_multiplicity = np.full([len(idxs_list)],-1.0)
+
+tot_cts = np.full([len(idxs_list)],-1.0)
+    
+keys = list(pk_data.dtype.fields.keys())
+keys.remove('m2q')
+Ga_idx = keys.index('Ga')
+N_idx = keys.index('N')
+
+for z_idx in range(len(idxs_list)):
+    
+    idxs = idxs_list[z_idx]
+    sub_epos = epos[idxs]
+    
+    bg_frac_roi = [120,150]
+    bg_frac = np.sum((sub_epos['m2q']>bg_frac_roi[0]) & (sub_epos['m2q']<bg_frac_roi[1])) \
+                    / np.sum((epos['m2q']>bg_frac_roi[0]) & (epos['m2q']<bg_frac_roi[1]))      
+    
+    cts, compositions, is_peak = GaN_fun.count_and_get_compositions(
+            epos=sub_epos, 
+            pk_data=pk_data,
+            pk_params=pk_params, 
+            glob_bg_param=glob_bg_param, 
+            bg_frac=bg_frac, 
+            noise_threshhold=2)
+    
+    csr[z_idx] = np.sum(cts['total'][Ga2p_idxs]-cts['global_bg'][Ga2p_idxs])/np.sum(cts['total'][Ga1p_idxs]-cts['global_bg'][Ga1p_idxs])
+    Ga_comp[z_idx] = ppd.do_composition(pk_data,cts)[0][0][Ga_idx]
+    Ga_comp_std[z_idx] = ppd.do_composition(pk_data,cts)[0][1][Ga_idx]
+    
+    N_comp[z_idx] = ppd.do_composition(pk_data,cts)[0][0][N_idx]
+    N_comp_std[z_idx] = ppd.do_composition(pk_data,cts)[0][1][N_idx]
+    
+    Ga_comp_glob[z_idx] = ppd.do_composition(pk_data,cts)[2][0][Ga_idx]
+    Ga_comp_std_glob[z_idx] = ppd.do_composition(pk_data,cts)[2][1][Ga_idx]
+    
+    N_comp_glob[z_idx] = ppd.do_composition(pk_data,cts)[2][0][N_idx]
+    N_comp_std_glob[z_idx] = ppd.do_composition(pk_data,cts)[2][1][N_idx]
+    
+    low_mz_idxs = np.where(sub_epos['m2q']<100)[0]
+    hit_multiplicity[z_idx] = np.sum(sub_epos[low_mz_idxs]['ipp']!=1)/sub_epos[low_mz_idxs].size
+    
+    compositions = ppd.do_composition(pk_data,cts)
+    #            ppd.pretty_print_compositions(compositions,pk_data)
+    #            print('COUNTS IN CHUNK: ',np.sum(cts['total']))
+    tot_cts[z_idx] = np.sum(cts['total'])
+    
+    avg_z[z_idx] = np.mean(sub_epos['z'])
+    
+    avg_voltage[z_idx] = np.mean(sub_epos['v_dc'])
+    
+
+fig = plt.figure(num=100)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+ax.plot(avg_z,csr)
+ax.set_xlabel('avg_z (nm)')
+ax.set_ylabel('csr')
+fig.tight_layout()
+
+fig = plt.figure(num=101)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+ax.plot(avg_z,avg_voltage)
+ax.set_xlabel('avg_z (nm)')
+ax.set_ylabel('avg voltage')
+fig.tight_layout()
+
+fig = plt.figure(num=102)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+ax.plot(avg_z,csr/avg_voltage)
+ax.set_xlabel('avg_z (nm)')
+ax.set_ylabel('csr/avg_voltage')
+fig.tight_layout()
+
+fig = plt.figure(num=103)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+ax.plot(avg_z,N_comp, label='N')
+ax.plot(avg_z,Ga_comp_glob, label='Ga')
+ax.plot(avg_z,Ga_comp_glob+N_comp_glob, label='Ga+N')
+ax.set_xlabel('avg_z (nm)')
+ax.legend()
+fig.tight_layout()
+
+
+fig = plt.figure(num=104)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+
+ax.errorbar(csr.flatten(),Ga_comp_glob.flatten(),yerr=Ga_comp_std_glob.flatten(),fmt='.',capsize=4)
+
+
+ax.set_xlabel('csr')
+ax.set_ylabel('Ga')
+ax.set_xscale('log')
+ax.grid(b=True)
+fig.tight_layout()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

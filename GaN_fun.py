@@ -287,7 +287,26 @@ def chop_data_rad_and_time(epos,c_pt,time_chunk_size=2**16,N_ann_chunks=3):
             
     return (time_chunk_centers, r_centers, idxs_list)
     
+
+def chop_data_z(epos,chunk_edges_nm=None, chunk_size=2**13):
     
+    es2cs = lambda es : (es[:-1]+es[1:])/2.0
+    
+    if chunk_edges_nm is None:
+        lims = np.percentile(epos['z'],[5, 95])
+        N_chunks = int(np.floor(epos.size/chunk_size))  
+        chunk_edges_nm = np.linspace(lims[0],lims[1],num=N_chunks)
+        
+    chunk_centers = es2cs(chunk_edges_nm)
+       
+    idxs_list = []
+
+    for z_idx in np.arange(chunk_centers.size):
+        idxs = np.where((epos['z']>chunk_edges_nm[z_idx]) & (epos['z']<=chunk_edges_nm[z_idx+1]))[0]
+            
+        idxs_list.append(idxs)
+            
+    return (chunk_centers, idxs_list)
 
 def heatmap(data, row_labels, col_labels, ax=None,
             cbar_kw={}, cbarlabel="", **kwargs):
