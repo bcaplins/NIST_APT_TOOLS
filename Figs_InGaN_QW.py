@@ -395,9 +395,22 @@ fig.tight_layout()
 
 
 
+sel_idxs = np.where(avg_z>5)[0]
 
 
+fig = plt.figure(num=1000)
+fig.set_size_inches(w=6.69, h=3)
+fig.clear()
+ax = fig.gca()
+ax.plot(avg_z[sel_idxs],csr[sel_idxs])
+ax.set_xlabel('depth (nm)')
+ax.set_ylabel('Ga CSR')
 
+twin_ax = ax.twinx()
+twin_ax.plot(avg_z[sel_idxs],avg_voltage[sel_idxs],'r')
+twin_ax.set_ylabel('voltage (V)')
+
+fig.tight_layout()
 
 
 

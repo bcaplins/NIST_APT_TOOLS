@@ -83,7 +83,7 @@ def plot_bowl_slices(tof,epos,fig_idx,clearFigure=True,user_ylim=[0,1200]):
     
     axes = fig.subplots(2,2,sharey=True)
 
-    delta = 3
+    delta = 5
     
     # Plot x cut
     idxs = np.nonzero(np.abs(epos['y_det']) < delta)

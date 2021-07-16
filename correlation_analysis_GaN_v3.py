@@ -300,6 +300,9 @@ epos_s = epos[sing_idxs]
 
 tmp_idxs = np.where(epos['ipp'] == 2)[0]
 doub_idxs = np.ravel(np.column_stack([tmp_idxs+i for i in range(2)]))
+
+multi_idxs = np.where(epos['ipp'] != 1)[0]
+
 epos_d = epos[doub_idxs]
 
 # voltage and bowl correct ToF data.  
@@ -319,6 +322,10 @@ tof_bcorr_fac = voltage_and_bowl.mod_geometric_bowl_correction(p_bowl,np.ones_li
 # find the voltage and bowl coefficients for the doubles data
 tof_vcorr_fac_d = tof_vcorr_fac[doub_idxs]
 tof_bcorr_fac_d = tof_bcorr_fac[doub_idxs]
+
+tof_vcorr_fac_m = tof_vcorr_fac[multi_idxs]
+tof_bcorr_fac_m = tof_bcorr_fac[multi_idxs]
+
 
 
 # Find transform to m/z space
@@ -423,7 +430,7 @@ pk_coords = cartesian_product([pk_times for i in range(2)])
 
 THRESH = 2
 
-multi_idx = np.where(epos['ipp']>=2)[0]
+multi_idx = np.where(epos['ipp']==2)[0]
 tofin = np.zeros((np.sum(epos['ipp'][multi_idx]-1), 2))
 vcorr_fac_in = np.zeros((np.sum(epos['ipp'][multi_idx]-1), 2))
 bcorr_fac_in = np.zeros((np.sum(epos['ipp'][multi_idx]-1), 2))
@@ -485,6 +492,7 @@ closest_sums[min_d>THRESH] = 957
 corr_dat = r0+r1*closest_sums[:,np.newaxis]
 
 tmp = epos_d['tof']*tof_bcorr_fac_d*tof_vcorr_fac_d
+
 plotting_stuff.plot_histo(tmp[1::2]-tmp[::2],fig_idx=332211,user_xlim=[-0,1000], user_bin_width=0.5, clearFigure=False)
 
 
