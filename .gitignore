@@ -1,4 +1,7 @@
 *.pyc
 .pytest_cache/
 .spyproject
-
+*.pdf
+*.png
+*.jpg
+*.jpeg

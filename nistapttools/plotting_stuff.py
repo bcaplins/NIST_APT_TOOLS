@@ -140,7 +140,7 @@ def plot_bowl_slices(tof,epos,fig_idx,clearFigure=True,user_ylim=[0,1200]):
     
     return axes
 
-def plot_histo(dat,fig_idx,user_label='histo',clearFigure=True,user_xlim=[0,100],user_bin_width=0.01, scale_factor=1):
+def plot_histo(dat,fig_idx,user_label='histo',clearFigure=True,user_xlim=[0,100],user_bin_width=0.01, scale_factor=1, user_color=None):
        
     fig = plt.figure(num=fig_idx)
     if clearFigure:
@@ -150,7 +150,11 @@ def plot_histo(dat,fig_idx,user_label='histo',clearFigure=True,user_xlim=[0,100]
     xs, ys = bin_dat(dat,isBinAligned=True,bin_width=user_bin_width,user_roi=user_xlim)
 #    ys_sm = ppd.do_smooth_with_gaussian(ys, std=5)
 
-    ax.plot(xs,scale_factor*ys,label=user_label,linewidth=1)
+    
+    if user_color is None:
+        ax.plot(xs,scale_factor*ys,label=user_label,linewidth=1)
+    else:
+        ax.plot(xs,scale_factor*ys,label=user_label,linewidth=1, color=user_color)
     
     ax.set(xlabel='m/z (Da)', ylabel='counts', xlim=user_xlim)
 

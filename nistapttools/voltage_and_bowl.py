@@ -23,11 +23,14 @@ def mod_full_vb_correction(epos, p_volt, p_bowl):
 def do_voltage_and_bowl(epos,p_volt,p_bowl):
 
     TOF_BIN_SIZE = 1.0
-    ROI = np.array([200, 1000])
+    ROI = np.array([150, 1000])
     
-    p_volt = basic_voltage_correction(epos['tof'],epos['v_dc'],p_volt,ROI, TOF_BIN_SIZE)
-    tof_vcorr = mod_basic_voltage_correction(p_volt,epos['tof'],epos['v_dc'])
+    if p_volt.size<1:
+        p_volt = basic_voltage_correction(epos['tof'],epos['v_dc'],p_volt,ROI, TOF_BIN_SIZE)
         
+    tof_vcorr = mod_basic_voltage_correction(p_volt[0],epos['tof'],epos['v_dc'])
+    
+    
     p_bowl = geometric_bowl_correction(tof_vcorr,epos['x_det'],epos['y_det'],p_bowl,ROI, TOF_BIN_SIZE)
     tof_bcorr = mod_geometric_bowl_correction(p_bowl,epos['tof'],epos['x_det'],epos['y_det'])
     
@@ -107,8 +110,7 @@ def mod_basic_voltage_correction(p_in,tof,v_dc, nom_vdc=5500):
     
     p_in = p_in*SCALES
         
-    new_tof = tof*np.sqrt(p_in[0]+v_dc)\
-                    /np.sqrt(p_in[0]+nom_vdc)
+    new_tof = tof*np.sqrt(p_in[0]+v_dc)/np.sqrt(p_in[0]+nom_vdc)
     
 #    com0 = np.mean(tof)
 #    com = np.mean(new_tof)
@@ -123,18 +125,21 @@ def basic_voltage_correction(tof,v_dc,p_guess,ROI,TOF_BIN_SIZE):
     opt_fun = lambda p: -1*TOF_BIN_SIZE*np.sum(np.histogram(mod_basic_voltage_correction(p,tof,v_dc),range=(ROI[0], ROI[1]),bins=N_BIN,density=True)[0]**2)
        
     N_SLICE = 32;
-    p_range = ( (-(np.min([np.min(v_dc)-100,500]))/SCALES[0], np.max(v_dc)/SCALES[0]),)
-    res = brute(opt_fun,
+    p_range = ( (-(np.min([np.min(v_dc)-100,500]))/SCALES[0], (np.max(v_dc)*2000/6500)/SCALES[0]),)
+    res, _,x,y = brute(opt_fun,
                 p_range,
                 Ns=N_SLICE,
                 disp=True,
                 full_output=True,
                 finish=None)
-    print('Optimization terminated!!!')
-    print('     Current function value: '+str(res[1]))
-    print('     Current parameter value: '+str(res[0]))
-    
+#    print('Optimization terminated!!!')
+#    print('     Current function value: '+str(res[1]))
+#    print('     Current parameter value: '+str(res[0]))
+#    
+    import matplotlib.pyplot as plt
 
+    print(p_range)
+    plt.plot(x,y)
 #    opts = {'xatol' : 1e-6,
 #            'maxiter' : 512,
 #            'disp' : 3}    
@@ -144,7 +149,7 @@ def basic_voltage_correction(tof,v_dc,p_guess,ROI,TOF_BIN_SIZE):
 #                          method='bounded')
 ##        
         
-    p_guess = np.atleast_1d(res[0])
+    p_guess = np.atleast_1d(res)
 
 #    cb = lambda xk: print(xk)
     cb = lambda xk: 0

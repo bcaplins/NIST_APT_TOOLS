@@ -3,18 +3,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Add parent directory to path
+import sys
+parent_path = '..\\'
+if parent_path not in sys.path:
+    sys.path.append(parent_path)    
+
 # custom imports
-import apt_fileio
-import m2q_calib
-import plotting_stuff
-import initElements_P3
+from nistapttools import apt_fileio
+from nistapttools import m2q_calib
+from nistapttools import plotting_stuff
+from nistapttools import initElements_P3
+from nistapttools import histogram_functions 
 
-import peak_param_determination as ppd
+import nistapttools.peak_param_determination as ppd
 
-from histogram_functions import bin_dat
-from voltage_and_bowl import do_voltage_and_bowl
-from voltage_and_bowl import mod_full_vb_correction
-import voltage_and_bowl
+from nistapttools.histogram_functions import bin_dat
+from nistapttools import voltage_and_bowl
+from nistapttools.voltage_and_bowl import do_voltage_and_bowl
+from nistapttools.voltage_and_bowl import mod_full_vb_correction
+
 
 import colorcet as cc
 
