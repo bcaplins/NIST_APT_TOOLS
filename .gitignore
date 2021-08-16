@@ -5,3 +5,6 @@
 *.png
 *.jpg
 *.jpeg
+*.rhit
+*.pos
+*.epos
