@@ -134,6 +134,7 @@ def log_xcorr_est_c(ref_m2q,tof):
     l_ref = np.log10(ref_m2q[ref_m2q>0.5])
 
     tmp = np.square(tof)
+    # PROBLEM HERE... new 4000 goes out to 40 us and 3000 went to 5 us!
     c_est = np.max(ref_m2q)/np.max(tmp)
     tmp = tmp*c_est
     l_q = np.log10(tmp[tmp>0.5])
@@ -173,10 +174,10 @@ def log_xcorr_est_c(ref_m2q,tof):
     
     
 
-def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
+def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500, c_guess=None):
 
 
-    ROI = [0.5, 120]
+    ROI = [20, 120]
     BIN_SIZE = 0.01
     
     N_BIN = int(np.rint((ROI[1]-ROI[0])/BIN_SIZE))
@@ -211,7 +212,10 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
     cb = lambda xk: 0
  
 #    p_guess = np.array([res[0], t0/SCALES[1]])
-    p_guess = np.array([c_lxc/SCALES[0], t0/SCALES[1]])
+    if c_guess is None:
+        p_guess = np.array([c_lxc/SCALES[0], t0/SCALES[1]])
+    else:
+        p_guess = np.array([c_guess/SCALES[0], t0/SCALES[1]])
 #    p_guess = np.array([c_physics/SCALES[0], t0/SCALES[1]])
 #    p_guess = np.array([c_historical/SCALES[0], t0/SCALES[1]])
 ##    

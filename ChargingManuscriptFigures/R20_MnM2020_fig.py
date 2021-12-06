@@ -190,11 +190,11 @@ def sio2_R20_corr():
 
     ax2.set(xlabel='ion sequence',ylabel='corrected flight time (ns)')
     
-    ax2twin = ax2.twinx()
-    ax2twin.plot(pointwise_scales,'-', 
-            linewidth=1,
-            color=mcd.XKCD_COLORS['xkcd:white'])
-    ax2twin.set(ylabel='correction factor, c',ylim=[0.90, 1.04],xlim=[0, 400000])
+#    ax2twin = ax2.twinx()
+#    ax2twin.plot(pointwise_scales,'-', 
+#            linewidth=1,
+#            color=mcd.XKCD_COLORS['xkcd:white'])
+#    ax2twin.set(ylabel='correction factor, c',ylim=[0.90, 1.04],xlim=[0, 400000])
     
     fig.tight_layout()
     fig.savefig(r'SiO2_EUV_corrected.pdf', format='pdf', dpi=600)
