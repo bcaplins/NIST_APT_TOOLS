@@ -1,2 +1,15 @@
+<<<<<<< HEAD
 
 .spyproject/workspace.ini
+=======
+*.pyc
+.pytest_cache/
+.spyproject
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.rhit
+*.pos
+*.epos
+>>>>>>> cbe04e35115a5846228840d10c7dc2c0f515d746
