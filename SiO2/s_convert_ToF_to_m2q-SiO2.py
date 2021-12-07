@@ -30,6 +30,13 @@ import peak_param_determination as ppd
 from histogram_functions import bin_dat
 from voltage_and_bowl import do_voltage_and_bowl
 
+sub_path = '.\\SEDcorr'
+if sub_path not in sys.path:
+    sys.path.append(os.path.abspath(sub_path))    
+    
+from SEDcorr import sed_corr
+
+
 
 # Read in template spectrum
 ref_fn = r"SiO2 epos files\R20_28197-1200nm.epos"
@@ -47,7 +54,7 @@ ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
 #fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
-fn = r"SiO2 epos files\R20_28199-1000nm.epos"
+fn = r"SiO2 epos files\R20_28197-400nm.epos"
 epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[25000:-1]
 
@@ -61,7 +68,7 @@ ax.set_title('roi selected to start analysis')
 epos = epos[roi_event_idxs]
 
 # Compute some extra information from epos information
-wall_time = np.cumsum(epos['pslep'])/10000.0
+wall_time = np.cumsum(epos['pslep'])/25000.0
 pulse_idx = np.arange(0,epos.size)
 isSingle = np.nonzero(epos['ipp'] == 1)
 
@@ -82,28 +89,63 @@ plotting_stuff.plot_bowl_slices(tof_corr,epos,3,clearFigure=True,user_ylim=[0,12
 # Find c and t0 for ToF data based on aligning to reference spectrum
 m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr)
 
+
+
+pointwise_scales = sed_corr.get_all_scale_coeffs(m2q_corr,
+                                                max_scale=1.15,
+                                                  roi=[0.5,75],
+                                                  cts_per_chunk=2**8,
+                                                  delta_logdat=5e-4)
+                                                                                 
+# Compute corrected data
+m2q_corr_q = m2q_corr/pointwise_scales
+
+# Convert back to tof
+tof_corr_q = np.sqrt(m2q_corr_q/(p_m2q[0]*1e-4))+p_m2q[1]
+
+# Plot TOF vs event index with voltage overlaid to show if voltage corr went ok
+ax = plotting_stuff.plot_TOF_vs_time(tof_corr_q,epos,2)
+ax.set_title('voltage and bowl corrected')
+
+# Plot slices from the detector to show if bowl corr went ok
+plotting_stuff.plot_bowl_slices(tof_corr_q,epos,3,clearFigure=True,user_ylim=[0,1200])
+
+# Find c and t0 for ToF data based on aligning to reference spectrum
+m2q_corr_q, p_m2q_q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr_q)
+   
 # Define calibration peaks
 ed = initElements_P3.initElements()
 ref_pk_m2qs = np.array([    ed['H'].isotopes[1][0],
-                        2*ed['H'].isotopes[1][0],
-                        (1/2)*ed['Si'].isotopes[28][0],
-                        ed['Si'].isotopes[28][0],
-                    ed['O'].isotopes[16][0],
-                    2*ed['O'].isotopes[16][0]])
+                            ed['H'].isotopes[2][0],
+                        ed['Si'].isotopes[28][0]/2,
+                        ed['O'].isotopes[16][0]/1,
+                        ed['O'].isotopes[16][0]*2,
+                        (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/1,
+                        (ed['Si'].isotopes[28][0]+2*ed['O'].isotopes[16][0])/1])
 
 # Perform 'linearization' m2q calibration
-m2q_corr2 = m2q_calib.calibrate_m2q_by_peak_location(m2q_corr,ref_pk_m2qs)
+m2q_corr2 = m2q_calib.calibrate_m2q_by_peak_location(m2q_corr_q,ref_pk_m2qs)
 
 # Plot the reference spectrum, (c, t0) corr spectrum and linearized spectrum
 #     to confirm that mass calibration went ok
 user_xlim=[0,100]
-plotting_stuff.plot_histo(ref_epos['m2q'],4,user_label='ref',user_xlim=user_xlim)
-plotting_stuff.plot_histo(m2q_corr,4,clearFigure=False,user_label='[c,t0] corr',user_xlim=user_xlim)
+plotting_stuff.plot_histo(ref_epos['m2q'],fig_idx=4,user_label='ref',user_xlim=user_xlim)
+plotting_stuff.plot_histo(m2q_corr_q,fig_idx=4,clearFigure=False,user_label='[c,t0] corr',user_xlim=user_xlim)
 ax = plotting_stuff.plot_histo(m2q_corr2,4,clearFigure=False,user_label='linearized',user_xlim=user_xlim)
-#for ref_pk_m2q in ref_pk_m2qs:
-#    ax.plot(ref_pk_m2q*np.ones(2),np.array([1,1e4]),'k--')
+for ref_pk_m2q in ref_pk_m2qs:
+    ax.plot(ref_pk_m2q*np.ones(2),np.array([1,1e4]),'k--')
+
+# plotting_stuff.plot_bowl_slices(epos['tof'],epos,3,clearFigure=True,user_ylim=[0,1200])
+
 
 # Save the data as a new epos file
 epos['m2q'] = m2q_corr2
-new_fn = fn[:-5]+'_vbm_corr.epos'
+new_fn = fn[:-5]+'_vbmq_corr.epos'
 apt_fileio.write_epos_numpy(epos,new_fn)
+
+
+
+
+
+
+
