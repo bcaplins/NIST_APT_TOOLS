@@ -33,6 +33,8 @@ fns = [r"SiO2 epos files\R20_28199-200nm.epos",
        r"SiO2 epos files\R20_28197-1000nm.epos",
         r"SiO2 epos files\R20_28197-1200nm.epos"]#,
         # r"SiO2 epos files\R20_28199-1000nm.epos"]
+        
+#fns = [r"SiO2 epos files\R20_28199-200nm.epos"]
 
 # This is the number of ranged counts in the above files
 # it is used for spectrum normalization below.
@@ -78,7 +80,7 @@ for i in range(len(fns)):
     nm = rngedcts[i]
     # epos.size
     
-    ax.plot(xs,ys_sm/nm,label=fns[i][:-5])
+    ax.plot(xs,ys_sm/nm*10**(3*i),label=fns[i][:-5])
     # ax.plot(xs,glob_bg/nm,label='global bg')
     
     ax.set(xlabel='m/z (Da)', ylabel='~counts')
@@ -87,6 +89,7 @@ for i in range(len(fns)):
     fig.canvas.manager.window.raise_()
     ax.set_yscale('log')    
     ax.legend()
+    plt.savefig('SiO2 mass spectra.pdf')
 
     # plotting_stuff.plot_histo(epos['tof'],200,user_label=fns[i][:-5],clearFigure=False,user_xlim=[0,40000],user_bin_width=100, scale_factor=1, user_color=None)
     
@@ -94,8 +97,7 @@ for i in range(len(fns)):
     
     
     plt.pause(0.1)
-    
-    
+#    break 
     
     
 # plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,231,clearFigure=True,user_ylim=[0,1200])
@@ -103,6 +105,29 @@ for i in range(len(fns)):
     
 
 #### END BASIC ANALYSIS ####
+    
+# R20 Constant evaporation rate, incresing E/pulse
+CSR=[2.45,6.62,27.38,18.47,36.13]
+conc_Si=[43.46,40.43,39.55,38.68,37.69]
+conc_O=[56.54,59.57,60.45,61.32,62.31]
+uncert=[0.18,0.21,0.24,0.27,0.29]
+
+fig = plt.figure(num=200)
+fig.clear()
+ax = fig.gca()
+plt.errorbar(CSR,conc_Si,yerr=2*np.array(uncert),fmt ='o',label="Si",capsize=5,markersize=4)#,'ko',label="Si")
+plt.errorbar(CSR,conc_O,yerr=2*np.array(uncert),fmt = 'o',label="O",capsize=5,markersize=4)#,'rs',label="O")
+plt.legend()
+#ax.set(xlabel='m/z (Da)', ylabel='Apparent composition (at. %)')
+ax.set(xlabel='Charge State Ratio ($Si^{++}/Si^+$)', ylabel='Apparent composition (at. %)')
+
+
+xxlim = [0, 40]
+yylim = [20, 80]
+
+plt.plot(xxlim, [33.33,33.33],linestyle='--',c='#1f77b4')
+plt.plot(xxlim, [66.66,66.66],linestyle='--',c='#ff7f0e')
+#plt.savefig('SiO2_CSR_plot.pdf')
 
 
 import sys

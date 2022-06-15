@@ -28,13 +28,78 @@ from histogram_functions import bin_dat
 
 # Read in data
 
-fn = r"SiO2 epos files\R20_28197-1200nm.epos"
-#fn = r"SiO2 epos files\R20_28197-1000nm.epos"
-#fn = r"SiO2 epos files\R20_28199-1000nm.epos"
-#fn = r"SiO2 epos files\R20_28199-600nm.epos"
-#fn = r"SiO2 epos files\R20_28197-400nm.epos"
-#fn = r"SiO2 epos files\R20_28199-200nm.epos"
+#Si-implanted not annealed
+#fn = r"Ga2O3 epos files\R20_18170.epos"
+fn = r"Ga2O3 epos files\R44_03672.epos"
 
+# Constant evaporation rate, incresing E/pulse
+#fn = r"Ga2O3 epos files\R20_28219_500pA.epos"
+#fn = r"Ga2O3 epos files\R20_28218_862pA.epos"
+#fn = r"Ga2O3 epos files\R20_28224_1740pA.epos"
+#fn = r"Ga2O3 epos files\R20_28216_4000pA.epos"
+#fn = r"Ga2O3 epos files\R20_28220_12000pA.epos"
+#fn = r"Ga2O3 epos files\R20_28221_21900pA.epos"
+#fn = r"Ga2O3 epos files\R20_28222_69300pA.epos"
+
+# Constant SV=3800 V, varying E/pulse
+#fn = r"Ga2O3 epos files\R20_28227_68600pA.epos"
+#fn = r"Ga2O3 epos files\R20_28228_22300pA.epos"
+#fn = r"Ga2O3 epos files\R20_28229_12100pA.epos"
+#fn = r"Ga2O3 epos files\R20_28230_3990pA.epos"
+#fn = r"Ga2O3 epos files\R20_28231_1720pA.epos"
+#fn = r"Ga2O3 epos files\R20_28233_505pA.epos"
+#fn = r"Ga2O3 epos files\R20_28234_1720pA.epos"
+#fn = r"Ga2O3 epos files\R20_28235_12100pA.epos"
+#fn = r"Ga2O3 epos files\R20_28236_68600pA.epos"
+
+#fn = r"Ga2O3 epos files\R20_28250.epos"
+#fn = r"Ga2O3 epos files\R20_28251.epos"
+
+# Constant SV=4700 V, varying E/pulse
+#fn = r"Ga2O3 epos files\R20_28253_4300pA.epos"
+#fn = r"Ga2O3 epos files\R20_28254_11500pA.epos"
+#fn = r"Ga2O3 epos files\R20_28255_1770pA.epos"
+#fn = r"Ga2O3 epos files\R20_28256_925pA.epos"
+#fn = r"Ga2O3 epos files\R20_28257_500pA.epos"
+#fn = r"Ga2O3 epos files\R20_28258_265pA.epos"
+#fn = r"Ga2O3 epos files\R20_28259_925pA.epos"
+#fn = r"Ga2O3 epos files\R20_28260_1770pA.epos"
+#fn = r"Ga2O3 epos files\R20_28261_11500pA.epos"
+#fn = r"Ga2O3 epos files\R20_28262_4300pA.epos"
+
+# R44 250 kHz constant evaporation rate = 0.3, varying E/pulse
+#fn = r"Ga2O3 epos files\R44_03695_200fJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_500fJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_1pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_5pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_10pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_20pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_40pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_80pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_120pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03695_160pJ.epos"
+
+# R44 25 kHz constant evaporation rate = 0.5, varying E/pulse
+#fn = r"Ga2O3 epos files\R44_03696_500fJ.epos"
+#fn = r"Ga2O3 epos files\R44_03696_1pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03696_5pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03697_10pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03697_20pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03697_40pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03697_80pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03698_120pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03698_160pJ.epos"
+
+# R44 25 kHz constant SV=4900 V, varying E/pulse
+#fn = r"Ga2O3 epos files\R44_03699_1pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_5pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_10pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_20pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_40pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_80pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_81pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_120pJ.epos"
+#fn = r"Ga2O3 epos files\R44_03699_160pJ.epos"
 
 fn = fn[:-5]+'_vbmq_corr.epos'
 epos = apt_fileio.read_epos_numpy(fn)
@@ -55,58 +120,37 @@ LASER_REP_RATE = 25000.0
 wall_time = np.cumsum(epos['pslep'])/LASER_REP_RATE
 pulse_idx = np.arange(0,epos.size)
 isSingle = np.nonzero(epos['ipp'] == 1)
+#isMulti = np.nonzero(epos['ipp'] != 1)
+
+
+#epos = epos[isSingle]
+#epos = epos[isMulti]
+
 
 # Define peaks to range
 ed = initElements_P3.initElements()
-#                            N      Ga      Mg  Da
+#                            Ga     O      Da
 # Define possible peaks
 
-# ## Oxygen def
-# pk_data =   np.array(    [  (1,     0,      ed['Si'].isotopes[28][0]/3),
-#                             (1,     0,      ed['Si'].isotopes[28][0]/2),
-#                             (1,     0,      ed['Si'].isotopes[29][0]/2),
-#                             (1,     0,      ed['Si'].isotopes[30][0]/2),
-#                             (0,     1,      ed['O'].isotopes[16][0]/1),
-#                             (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/2),
-#                             (2,     0,      (2*ed['Si'].isotopes[28][0])/2),
-#                             (2,     0,      28.7),
-#                             (2,     0,      (2*ed['Si'].isotopes[29][0]+2*ed['H'].isotopes[1][0])/2),
-#                             (0,     2,      (2*ed['O'].isotopes[16][0])/1),
-#                             (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])),
-#                             (1,     1,      (ed['Si'].isotopes[29][0]+ed['O'].isotopes[16][0])),
-#                             (1,     1,      (ed['Si'].isotopes[30][0]+ed['O'].isotopes[16][0])),
-#                             (2,     0,      (2*ed['Si'].isotopes[28][0]+4*ed['H'].isotopes[1][0])),
-#                             (2,     0,      (ed['Si'].isotopes[28][0]+ed['Si'].isotopes[29][0]+4*ed['H'].isotopes[1][0])),
-#                             (2,     0,      (ed['Si'].isotopes[28][0]+ed['Si'].isotopes[30][0]+4*ed['H'].isotopes[1][0]))
-#                             ],
-#                             dtype=[('Si','i4'),('O','i4'),('m2q','f4')] )
-
-# Oxygen rich
-pk_data =   np.array(    [  (0,     1,      ed['O'].isotopes[16][0]/2),
-                            (1,     0,      ed['Si'].isotopes[28][0]/3),
-                            (1,     0,      ed['Si'].isotopes[29][0]/3),
-                            (1,     0,      ed['Si'].isotopes[30][0]/3),
-                            (1,     0,      ed['Si'].isotopes[28][0]/2),
-                            (1,     0,      ed['Si'].isotopes[29][0]/2),
-                            (1,     0,      ed['Si'].isotopes[30][0]/2),
-                            (0,     1,      ed['O'].isotopes[16][0]/1),
+pk_data =   np.array(    [  (0,     1,      ed['O'].isotopes[16][0]/1),
                             (0,     1,      (ed['O'].isotopes[16][0]+ed['H'].isotopes[1][0])/1),
                             (0,     1,      (ed['O'].isotopes[16][0]+2*ed['H'].isotopes[1][0])/1),
-                            (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/2),
-                            (1,     1,      (ed['Si'].isotopes[29][0]+ed['O'].isotopes[16][0])/2),
-                            (1,     1,      (ed['Si'].isotopes[30][0]+ed['O'].isotopes[16][0])/2),
-                            (1,     0,      (ed['Si'].isotopes[28][0])/1),
-                            (1,     0,      (ed['Si'].isotopes[29][0])/1),
-                            (1,     2,      (ed['Si'].isotopes[28][0]+2*ed['O'].isotopes[16][0])/2),
+                            (1,     0,      ed['Ga'].isotopes[69][0]/3),
+                            (1,     0,      ed['Ga'].isotopes[71][0]/3),
                             (0,     2,      (2*ed['O'].isotopes[16][0])/1),
-                            (1,     1,      (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/1),
-                            (1,     1,      (ed['Si'].isotopes[29][0]+ed['O'].isotopes[16][0])/1),
-                            (1,     1,      (ed['Si'].isotopes[30][0]+ed['O'].isotopes[16][0])/1),
-                            (1,     2,      (ed['Si'].isotopes[28][0]+2*ed['O'].isotopes[16][0])/1),
-                            (1,     2,      (ed['Si'].isotopes[29][0]+2*ed['O'].isotopes[16][0])/1),
-                            (1,     2,      (ed['Si'].isotopes[30][0]+2*ed['O'].isotopes[16][0])/1)
+                            (1,     0,      ed['Ga'].isotopes[69][0]/2),
+                            (1,     0,      ed['Ga'].isotopes[71][0]/2),
+                            (1,     1,      (ed['Ga'].isotopes[69][0]+ed['O'].isotopes[16][0])/2),
+                            (1,     1,      (ed['Ga'].isotopes[71][0]+ed['O'].isotopes[16][0])/2),
+                            (1,     0,      ed['Ga'].isotopes[69][0]/1),
+                            (1,     0,      ed['Ga'].isotopes[71][0]/1),
+                            (2,     2,      (2*ed['Ga'].isotopes[69][0]+2*ed['O'].isotopes[16][0])/2),
+                            (2,     2,      (2*ed['Ga'].isotopes[69][0]+2*ed['O'].isotopes[16][0])/2),
+                            (2,     2,      (2*ed['Ga'].isotopes[71][0]+2*ed['O'].isotopes[16][0]+ed['H'].isotopes[1][0])/2),
+                            (1,     2,      (ed['Ga'].isotopes[69][0]+2*ed['O'].isotopes[16][0])/1),
+                            (1,     2,      (ed['Ga'].isotopes[71][0]+2*ed['O'].isotopes[16][0])/1)                            
                             ],
-                            dtype=[('Si','i4'),('O','i4'),('m2q','f4')] )
+                            dtype=[('Ga','i4'),('O','i4'),('m2q','f4')] )
 
 ##                            N      Ga      Al  Da
 ## Define possible peaks
@@ -139,11 +183,11 @@ pk_data =   np.array(    [  (0,     1,      ed['O'].isotopes[16][0]/2),
 
 
 # Define which peaks to use for CSR calcs
-Si1p_m2q = ed['Si'].isotopes[28][0]
-Si2p_m2q = ed['Si'].isotopes[28][0]/2
+Ga1p_m2q = ed['Ga'].isotopes[69][0]
+Ga2p_m2q = ed['Ga'].isotopes[69][0]/2
 
-Si1p_idx = np.argmin(np.abs(Si1p_m2q-pk_data['m2q']))
-Si2p_idx = np.argmin(np.abs(Si2p_m2q-pk_data['m2q']))
+Ga1p_idx = np.argmin(np.abs(Ga1p_m2q-pk_data['m2q']))
+Ga2p_idx = np.argmin(np.abs(Ga2p_m2q-pk_data['m2q']))
 
 # Range the peaks
 pk_params = ppd.get_peak_ranges(epos,pk_data['m2q'],peak_height_fraction=0.1)
@@ -176,13 +220,13 @@ print('Total Ranged Local Background Ions: '+str(np.sum(cts['local_bg'])))
 print('Total Ranged Global Background Ions: '+str(np.sum(cts['global_bg'])))
 print('Total Ions: '+str(epos.size))
 
-print('Overall CSR (no bg)    : '+str(cts['total'][Si2p_idx]/cts['total'][Si1p_idx]))
+print('Overall CSR (no bg)    : '+str(cts['total'][Ga2p_idx]/cts['total'][Ga1p_idx]))
 # print('Overall CSR (local bg) : '+str((np.sum(cts['total'][Ga2p_idxs])-np.sum(cts['local_bg'][Ga2p_idxs]))/(np.sum(cts['total'][Ga1p_idxs])-np.sum(cts['local_bg'][Ga1p_idxs]))))
 # print('Overall CSR (global bg): '+str((np.sum(cts['total'][Ga2p_idxs])-np.sum(cts['global_bg'][Ga2p_idxs]))/(np.sum(cts['total'][Ga1p_idxs])-np.sum(cts['global_bg'][Ga1p_idxs]))))
 
 
 # Plot all the things
-xs, ys = bin_dat(epos['m2q'],user_roi=[0.5, 80],isBinAligned=True)
+xs, ys = bin_dat(epos['m2q'],user_roi=[0.5, 120],isBinAligned=True)
 #ys_sm = ppd.do_smooth_with_gaussian(ys,10)
 ys_sm = ppd.moving_average(ys,10)
 
