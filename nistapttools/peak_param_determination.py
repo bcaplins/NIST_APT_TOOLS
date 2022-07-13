@@ -139,6 +139,192 @@ def do_counting(epos, pk_params, glob_bg_param):
         
     return cts 
 
+
+def do_counting_csv_simple(xs, ys, pk_params):
+    
+    
+    cts = np.full(pk_params.size,-1,dtype=[('total','f4'),
+                                            ('local_bg','f4'),
+                                            ('global_bg','f4')])
+    
+    for idx,pk_param in enumerate(pk_params):
+        
+        pk_rng = [pk_param['pre_rng'],pk_param['post_rng']]
+        
+        tot_cts = ys[(xs>=pk_rng[0]) & (xs<=pk_rng[1])].sum()
+        
+        cts['total'][idx] = tot_cts
+        cts['local_bg'][idx] = 0
+        cts['global_bg'][idx] = 0
+        
+    return cts 
+
+def do_counting_csv(xs, ys, pk_params, glob_bg_param):
+    
+    
+    
+    glob_bg = physics_bg(xs,glob_bg_param)    
+
+    
+    cts = np.full(pk_params.size,-1,dtype=[('total','f4'),
+                                            ('local_bg','f4'),
+                                            ('global_bg','f4')])
+    
+    for idx,pk_param in enumerate(pk_params):
+        
+        pk_rng = [pk_param['pre_rng'],pk_param['post_rng']]
+        
+#        print('pk rng',pk_rng)
+        local_bg_cts = pk_param['loc_bg']*(pk_rng[1]-pk_rng[0])/0.001
+        global_bg_cts = glob_bg[(xs>=pk_rng[0]) & (xs<=pk_rng[1])].sum()
+        tot_cts = ys[(xs>=pk_rng[0]) & (xs<=pk_rng[1])].sum()
+        
+        
+#        print('tot counts',tot_cts)
+        
+        cts['total'][idx] = tot_cts
+        cts['local_bg'][idx] = local_bg_cts
+        cts['global_bg'][idx] = global_bg_cts
+        
+    return cts 
+
+
+
+def get_peak_ranges_csv(xs_full_1mDa, ys_full_1mDa, peak_m2qs,peak_height_fraction=0.01, glob_bg_param=0):
+
+    # Initialize a peak paramter array
+    pk_params = np.full(peak_m2qs.size,-1,dtype=[('x0_nominal','f4'),
+                                                 ('x0_g_fit','f4'),
+                                                 ('x0_mean_shift','f4'),
+                                                ('std_fit','f4'),
+                                                ('off','f4'),
+                                                ('amp','f4'),
+                                                ('pre_rng','f4'),
+                                                ('post_rng','f4'),
+                                                ('pre_bg_rng','f4'),
+                                                ('post_bg_rng','f4'),
+                                                ('loc_bg','f4')])
+    pk_params['x0_nominal'] = peak_m2qs
+    
+        
+    ys_full_5mDa_sm = do_smooth_with_gaussian(ys_full_1mDa, std=5)
+    
+    N_kern = 250;
+    ys_full_fwd_sm = forward_moving_average(ys_full_1mDa,n=N_kern)
+    ys_full_bwd_sm = forward_moving_average(ys_full_1mDa,n=N_kern,reverse=True)
+    
+    ys_glob_bg_1mDa = physics_bg(xs_full_1mDa,glob_bg_param)
+    
+    # Get estiamtes for x0, amp, std_fit
+    for idx,pk_param in enumerate(pk_params):
+        # Select peak roi
+        roi_half_wid = 0.5
+        pk_roi = np.array([-roi_half_wid, roi_half_wid])+pk_param['x0_nominal']
+        
+        
+        pk_idxs = np.where((xs_full_1mDa>pk_roi[0]) & (xs_full_1mDa<pk_roi[1]))[0]
+        
+        
+        # Fit to gaussian
+        smooth_param = 5
+        popt = fit_to_g_off_csv(xs_full_1mDa[pk_idxs],ys_full_1mDa[pk_idxs],user_std=smooth_param)
+        
+        pk_param['amp'] = popt[0]
+        pk_param['x0_g_fit'] = popt[1]
+        pk_param['std_fit'] = popt[2]
+        pk_param['off'] = popt[3]
+#        print('gaussian peak loc',pk_param['x0_g_fit'])
+        
+        
+        pk_idxs = np.where((xs_full_1mDa>(pk_param['x0_g_fit']-0.5*pk_param['std_fit'])) & (xs_full_1mDa<(pk_param['x0_g_fit']+0.5*pk_param['std_fit'])))[0]
+        popt = fit_to_g_off_csv(xs_full_1mDa[pk_idxs],ys_full_1mDa[pk_idxs],user_std=1)
+
+        pk_param['x0_mean_shift'] = popt[1]
+        
+                
+#        ax = plt.gca()
+#        ax.plot(np.array([1,1])*pk_param['x0_mean_shift'],np.array([0, pk_param['amp']+pk_param['off']]),'k--')
+        
+#        plt.pause(0.001)
+#        plt.pause(2)
+    
+        # select starting locations
+        pk_idx = np.argmin(np.abs(pk_param['x0_mean_shift']-xs_full_1mDa))
+        pk_lhs_idx = np.argmin(np.abs((pk_param['x0_mean_shift']-pk_param['std_fit'])-xs_full_1mDa))    
+        pk_rhs_idx = np.argmin(np.abs((pk_param['x0_mean_shift']+pk_param['std_fit'])-xs_full_1mDa))
+        
+        # Create a peak amplitude estimate.  I use the average of the gaussian amplitude and the 5 mDa smoothed data.
+        # Notice the gaussian amplitude has the baseline removed, and therefor I subtract the global background from the smoothed data.
+        pk_amp = 0.5*(pk_param['amp'] + ys_full_5mDa_sm[pk_idx]-ys_glob_bg_1mDa[pk_idx])
+        
+        curr_val = ys_full_5mDa_sm[pk_idx]
+        
+        for i in np.arange(pk_lhs_idx,-1,-1):
+            curr_val = ys_full_5mDa_sm[i]        
+            
+            # Note that the global background is subtracted off the current value.  One day I should make this more general...
+            if ((curr_val-ys_glob_bg_1mDa[i]) < peak_height_fraction*pk_amp) and (pk_param['pre_rng']<0):
+                # This is a range limit
+                pk_param['pre_rng'] = xs_full_1mDa[i]
+            
+            if curr_val<ys_full_bwd_sm[i]:
+                # Assume we are at the prepeak baseline noise
+                if pk_param['pre_rng']<0:
+                    pk_param['pre_rng'] = xs_full_1mDa[i]
+                pk_param['pre_bg_rng'] = xs_full_1mDa[i]
+                break
+            
+        curr_val = ys_full_5mDa_sm[pk_idx]
+        for i in np.arange(pk_rhs_idx,xs_full_1mDa.size):
+            curr_val = ys_full_5mDa_sm[i]        
+                
+            if ((curr_val-ys_glob_bg_1mDa[i]) < peak_height_fraction*pk_amp) and (pk_param['post_rng']<0):
+                # This is a range limit
+                pk_param['post_rng'] = xs_full_1mDa[i]
+            
+            if curr_val<ys_full_fwd_sm[i]:
+                # Assume we are at the prepeak baseline noise
+                if pk_param['post_rng']<0:
+                    pk_param['post_rng'] = xs_full_1mDa[i]
+                pk_param['post_bg_rng'] = xs_full_1mDa[i]
+                break      
+        
+        pre_pk_rng = [pk_param['pre_bg_rng']-0.22,pk_param['pre_bg_rng']-0.02]
+        
+        
+        bg_idxs = np.where((xs_full_1mDa>=pre_pk_rng[0]) & (xs_full_1mDa<pre_pk_rng[1]))[0]
+        
+        
+        pk_param['loc_bg'] = np.sum(ys_full_1mDa[bg_idxs].sum())*0.001/(pre_pk_rng[1]-pre_pk_rng[0])
+
+        
+#        ax.plot(np.array([1,1])*pk_param['pre_rng'] ,np.array([0,1])*(pk_param['amp']+pk_param['off']),'k--')
+#        ax.plot(np.array([1,1])*pk_param['post_rng'] ,np.array([0,1])*(pk_param['amp']+pk_param['off']),'k--')
+#    #    ax.plot(np.array([1,1])*(pk_param['x0']+1*pk_param['std_fit'])   ,np.array([np.min(ys_smoothed),np.max(ys_smoothed)]),'k--')
+#    #    ax.plot(np.array([1,1])*(pk_param['x0']+5*pk_param['std_fit']),np.array([np.min(ys_smoothed),np.max(ys_smoothed)]),'k--')
+#        plt.pause(0.1)
+    
+#    ax.clear()
+#    ax.plot(xs_full_1mDa,ys_full_5mDa_sm,label='5 mDa smooth')    
+#    for idx,pk_param in enumerate(pk_params):
+#        ax.plot(np.array([1,1])*pk_param['pre_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'k--')
+#        ax.plot(np.array([1,1])*pk_param['post_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'k--')
+#        ax.plot(np.array([1,1])*pk_param['pre_bg_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'r--')
+#        ax.plot(np.array([1,1])*pk_param['post_bg_rng'] ,np.array([0.5,(pk_param['amp']+pk_param['off'])]),'r--')
+#    
+#    ax.set_yscale('log')
+#    ax.set(ylim=[0.1,1000])
+    
+    return pk_params
+
+
+
+
+
+
+
+
+
 def get_peak_ranges(epos, peak_m2qs,peak_height_fraction=0.01, glob_bg_param=0):
 
     # Initialize a peak paramter array
@@ -316,6 +502,37 @@ def get_glob_bg(m2qs,rois=None):
         
     return bg_param
 
+def get_glob_bg_csv(xs, ys,rois=None):
+    if rois==None:
+        rois = [[3.5,6.5]]
+    
+    # Check to see if just one roi. Nested lists are what the code expects
+    if len(rois)==2:
+        if type(rois[0]) is not list:
+            rois = [rois]
+    
+    EPS = 0.01
+    
+    numerator = 0.0
+    denominator = 0.0
+    for roi in rois:
+        upp = np.max(roi)
+        low = np.min(roi)    
+        numerator += ys[(xs>=low) & (xs<upp)].sum()
+        denominator += 2*(np.sqrt(upp+EPS)-np.sqrt(low+EPS))
+    
+    print('# of counts used to define global bg: ', numerator)
+    print('global bg parameter error: ',100*np.sqrt(numerator)/numerator,' %')
+    bg_param = numerator/denominator
+    
+#    bg_param_per_dalton = (epos['m2q'][(epos['m2q']>=roi[0]) & (epos['m2q']<=roi[1])].size) \
+#                            /(2*(np.sqrt(roi[1]+EPS)-np.sqrt(roi[0]+EPS)))     
+#    def bg_func(m2qs,m2q_bin_size):
+#        return m2q_bin_size*bg_param/np.sqrt(m2qs+EPS)
+        
+    return bg_param
+
+
 #
 #def fit_uncorr_bg(dat,fit_roi=[3.5,6.5]):
 #
@@ -356,6 +573,123 @@ def get_glob_bg(m2qs,rois=None):
 def pk_mod_fun(x,amp,x0,sigma,b):
     return amp*b_G(x,sigma,x0)+b
         
+
+
+
+
+
+
+def fit_to_g_off_csv(xs, ys, user_std, user_p0=np.array([])):
+    
+    if ys.sum()<32:
+        raise Exception('NEED MORE COUNTS IN PEAK')
+        
+    std = user_std
+        
+    
+    ys_smoothed = do_smooth_with_gaussian(ys,std)
+    
+    
+    opt_fun = lambda p: np.sum(np.square(pk_mod_fun(xs, *p)-ys_smoothed))
+
+    
+
+#    def resid_func(p): 
+#        return pk_mod_fun(xs,*p)-ys_smoothed
+    
+    N4 = ys_smoothed.size//4
+    mx_idx = np.argmax(ys_smoothed[N4:(3*N4)])+N4
+    
+    if(user_p0.size == 0):
+        p0 = np.array([ys_smoothed[mx_idx]-np.min(ys_smoothed), xs[mx_idx], 0.015,  np.percentile(ys_smoothed,20)])
+    else:
+        p0 = user_p0    
+        
+    # b_model2(x,amp_g,x0,sigma,b):
+    lbs = np.array([0,       np.percentile(xs,10),  0.005,   0])
+    ubs = np.array([2*p0[0],  np.percentile(xs,90), 0.50,   p0[0]])
+
+    # Force in bounds
+    p_guess = np.sort(np.c_[lbs,p0,ubs])[:,1]
+    
+    
+#    popt2, pcov =  = curve_fit(pk_mod_fun, xs, ys_smoothed, p0=p_guess, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
+#    popt2, pcov =  = curve_fit(pk_mod_fun, xs, ys_smoothed)
+    
+    
+#    bnds = ((0,2*p0[0]),
+#            (np.percentile(xs,10),np.percentile(xs,90)),
+#             (0.007,0.1),
+#             (0,p0[0]))
+#    
+
+#    opts = {'xatol' : 1e-5,
+#            'fatol' : 1e-12,
+#             'maxiter' : 1024,
+#             'maxfev' : 1024,
+#             'disp' : True}
+    
+    
+    ret_dict = constrNM(opt_fun,p_guess,lbs,ubs,xtol=1e-5, ftol=1e-12, maxiter=1024, maxfun=1024, full_output=1, disp=0)
+    
+#    print(p_guess)
+#    print(ret_dict['xopt'])
+    
+#    res = minimize(opt_fun, 
+#                   p_guess,
+#                   options=opts,
+##                   bounds=bnds,
+#                   method='Nelder-Mead')  
+#
+#    if res.x[1]<np.percentile(xs,10) or res.x[1]>np.percentile(xs,90):
+#        res.x = p_guess
+
+
+#    print(np.abs(res.x))
+    
+    
+#    popt2 = least_squares(resid_func, x0=p0, bounds=(lbs,ubs), verbose=2, ftol=1e-12, max_nfev=2048)
+#    curve_fit(pk_mod_fun, xs, ys_smoothed, p0=p0)
+    
+#    popt = least_squares(resid_func, p0, verbose=0, ftol=1e-12, max_nfev=2048)
+#
+#    fig = plt.figure(num=999)
+#    fig.clear()
+#    ax = plt.axes()
+#    
+#    ax.plot(xs,ys,'.',label='raw')
+#    ax.plot(xs,ys_smoothed,label='smoothed')
+#    
+#    mod_y = pk_mod_fun(xs,*p_guess)
+#    ax.plot(xs,mod_y,label='guess')
+#    
+#    
+#    mod_y = pk_mod_fun(xs,*res.x)
+#    
+#    ax.plot(xs,mod_y,label='fit')
+#    
+#    ax.legend()
+#    
+#    
+#    
+#    plt.pause(.001)
+#
+#    # Find halfway down and up each side
+#    max_idx = np.argmax(N)
+#    max_val = N[max_idx]
+#    
+#    lhs_dat = N[0:max_idx]
+#    rhs_dat = N[max_idx:]
+#    
+#    lhs_idx = np.argmin(np.abs(lhs_dat-max_val/2))
+#    rhs_idx = np.argmin(np.abs(rhs_dat-max_val/2))+max_idx
+##    
+#    hwhm_est = (x[rhs_idx]-x[lhs_idx])/2
+#
+#
+    return np.abs(ret_dict['xopt'])
+
+
 
 
 def fit_to_g_off(dat, user_std, user_p0=np.array([])):

@@ -28,11 +28,15 @@ from histogram_functions import bin_dat
 
 # Read in data
 # fn = r"SiO2 epos files\R20_28197-400nm.epos"
-fn = r"SiO2 epos files\R20_28197-1000nm.epos"
+fn = r"SiO2 epos files\R20_28199-200nm.epos"
+
 # fn = r"SiO2 epos files\R20_28197-1200nm.epos"
 # fn = r"SiO2 epos files\R20_28199-200nm.epos"
 # fn = r"SiO2 epos files\R20_28199-600nm.epos"
 # fn = r"SiO2 epos files\R20_28199-1000nm.epos"
+
+# fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\R20_07071-v01.epos"
+# fn = r"SiO2 epos files\R20_28197-1200nm.epos"
 
 
 fn = fn[:-5]+'_vbmq_corr.epos'

@@ -9,6 +9,9 @@ This is a temporary script file.
 import numpy as np
 import matplotlib.pyplot as plt
 
+import colorcet as cc
+cm = cc.cm.rainbow_r
+
 # Add parent directory to path
 import sys
 import os
@@ -39,13 +42,14 @@ fns = [r"SiO2 epos files\R20_28199-200nm.epos",
 rngedcts = [506050, 371085, 319139, 259340, 204811]
 
 
-fig = plt.figure(num=100)
+fig = plt.figure(figsize=(18,6), num=101)
 fig.clear()
 
 # fig200 = plt.figure(num=200)
 # fig200.clear()
 
 for i in range(len(fns)):
+    i=len(fns)-1
     fn = fns[i][:-5]+'_vbmq_corr.epos'
     epos = apt_fileio.read_epos_numpy(fn)
     #epos = epos[epos.size//2:-1]
@@ -66,7 +70,7 @@ for i in range(len(fns)):
     glob_bg_param = ppd.get_glob_bg(epos['m2q'])
     
     # Plot all the things
-    xs, ys = bin_dat(epos['m2q'],user_roi=[0.5, 80],isBinAligned=True)
+    xs, ys = bin_dat(epos['m2q'],user_roi=[0, 70],isBinAligned=True)
     #ys_sm = ppd.do_smooth_with_gaussian(ys,10)
     ys_sm = ppd.moving_average(ys,30)
     
@@ -76,9 +80,13 @@ for i in range(len(fns)):
     ax = fig.gca()
     
     nm = rngedcts[i]
+    nm = .5
+    
     # epos.size
     
-    ax.plot(xs,ys_sm/nm,label=fns[i][:-5])
+    col = cm(i/(len(fns)-1))
+    
+    ax.plot(xs,ys_sm/nm,label=fns[i][:-5], color=col)
     # ax.plot(xs,glob_bg/nm,label='global bg')
     
     ax.set(xlabel='m/z (Da)', ylabel='~counts')
@@ -86,7 +94,7 @@ for i in range(len(fns)):
     fig.tight_layout()
     fig.canvas.manager.window.raise_()
     ax.set_yscale('log')    
-    ax.legend()
+    # ax.legend()
 
     # plotting_stuff.plot_histo(epos['tof'],200,user_label=fns[i][:-5],clearFigure=False,user_xlim=[0,40000],user_bin_width=100, scale_factor=1, user_color=None)
     
@@ -94,9 +102,23 @@ for i in range(len(fns)):
     
     
     plt.pause(0.1)
+
     
+    ax.set_xlim(0,70)
+    ax.set_ylim(1e-1,5e3)    
+    break
     
-    
+# ax.set_xlim(13.5,17.5)
+# ax.set_ylim(1e-7,2e-2)
+
+# ax.set_xlim(27,31)
+# ax.set_ylim(1e-7,2e-3)
+
+# ax.set_xlim(59,63)
+# ax.set_ylim(2e-7,2e-4)
+
+ax.xaxis.grid(False)
+fig.tight_layout()
     
 # plotting_stuff.plot_TOF_vs_time(epos['m2q'],epos,231,clearFigure=True,user_ylim=[0,1200])
 # plotting_stuff.plot_histo(epos['tof'],231,user_label='histo',clearFigure=True,user_xlim=[0,40000],user_bin_width=1, scale_factor=1, user_color=None)
