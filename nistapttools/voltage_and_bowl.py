@@ -20,45 +20,53 @@ def mod_full_vb_correction(epos, p_volt, p_bowl):
                                                 epos['y_det'])
 
 
-def do_voltage_and_bowl(epos,p_volt,p_bowl):
+def do_voltage_and_bowl(epos,p_volt,p_bowl, skip_voltage=False):
 
     TOF_BIN_SIZE = 1.0
     ROI = np.array([150, 1000])
+
     
-    if p_volt.size<1:
-        p_volt = basic_voltage_correction(epos['tof'],epos['v_dc'],p_volt,ROI, TOF_BIN_SIZE)
+    if skip_voltage:
+        TOF_BIN_SIZE = 0.125
+        p_bowl = geometric_bowl_correction(epos['tof'],epos['x_det'],epos['y_det'],p_bowl,ROI, TOF_BIN_SIZE)
+        tof_corr = mod_geometric_bowl_correction(p_bowl,epos['tof'],epos['x_det'],epos['y_det'])
+        p_volt = np.array([0.0, 0.0])
+    else:
+            
+        if p_volt.size<1:
+            p_volt = basic_voltage_correction(epos['tof'],epos['v_dc'],p_volt,ROI, TOF_BIN_SIZE)
+            
+        tof_vcorr = mod_basic_voltage_correction(p_volt[0],epos['tof'],epos['v_dc'])
         
-    tof_vcorr = mod_basic_voltage_correction(p_volt[0],epos['tof'],epos['v_dc'])
-    
-    
-    p_bowl = geometric_bowl_correction(tof_vcorr,epos['x_det'],epos['y_det'],p_bowl,ROI, TOF_BIN_SIZE)
-    tof_bcorr = mod_geometric_bowl_correction(p_bowl,epos['tof'],epos['x_det'],epos['y_det'])
-    
-    TOF_BIN_SIZES = [0.125]
-    
-    for tof_bin_size in TOF_BIN_SIZES:
-        p_volt = full_voltage_correction(tof_bcorr,epos['v_dc'],p_volt,ROI,tof_bin_size)
-        tof_vcorr = mod_full_voltage_correction(p_volt,epos['tof'],epos['v_dc'])
         
-    #    plot_vs_time()
-    #    plot_vs_time_kde()
-    #    plot_histos()
-    
-        p_bowl = geometric_bowl_correction(tof_vcorr,epos['x_det'],epos['y_det'],p_bowl,ROI, tof_bin_size)
+        p_bowl = geometric_bowl_correction(tof_vcorr,epos['x_det'],epos['y_det'],p_bowl,ROI, TOF_BIN_SIZE)
         tof_bcorr = mod_geometric_bowl_correction(p_bowl,epos['tof'],epos['x_det'],epos['y_det'])
-
-    #    plot_vs_radius()
-    #    plot_vs_time_kde()
-    #    plot_histos()
         
-    tof_vcorr = mod_full_voltage_correction(p_volt,epos['tof'],epos['v_dc'])
-    tof_corr = mod_geometric_bowl_correction(p_bowl,tof_vcorr,epos['x_det'],epos['y_det'])
-
-    #plot_vs_time()
-    #plot_vs_radius()
-    #plot_histos()
-    #plot_vs_time_kde()
+        TOF_BIN_SIZES = [0.125]
+        
+        for tof_bin_size in TOF_BIN_SIZES:
+            p_volt = full_voltage_correction(tof_bcorr,epos['v_dc'],p_volt,ROI,tof_bin_size)
+            tof_vcorr = mod_full_voltage_correction(p_volt,epos['tof'],epos['v_dc'])
+            
+        #    plot_vs_time()
+        #    plot_vs_time_kde()
+        #    plot_histos()
+        
+            p_bowl = geometric_bowl_correction(tof_vcorr,epos['x_det'],epos['y_det'],p_bowl,ROI, tof_bin_size)
+            tof_bcorr = mod_geometric_bowl_correction(p_bowl,epos['tof'],epos['x_det'],epos['y_det'])
     
+        #    plot_vs_radius()
+        #    plot_vs_time_kde()
+        #    plot_histos()
+            
+        tof_vcorr = mod_full_voltage_correction(p_volt,epos['tof'],epos['v_dc'])
+        tof_corr = mod_geometric_bowl_correction(p_bowl,tof_vcorr,epos['x_det'],epos['y_det'])
+    
+        #plot_vs_time()
+        #plot_vs_radius()
+        #plot_histos()
+        #plot_vs_time_kde()
+        
     return (tof_corr, p_volt, p_bowl)
 
 

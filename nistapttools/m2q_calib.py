@@ -148,9 +148,9 @@ def log_xcorr_est_c(ref_m2q,tof):
     
     
     # We know the remaining shift should be small
-    N4 = res.size//4
-    res[0:N4] = 0
-    res[3*N4:-1] = 0
+    Nclip = int(0.45*res.size)
+    res[0:Nclip] = 0
+    res[(res.size-Nclip):-1] = 0
     
     
     x_c = np.mean(xs_l_q)
@@ -173,7 +173,7 @@ def log_xcorr_est_c(ref_m2q,tof):
     
     
 
-def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
+def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500, t0=1):
 
 
     ROI = [0.5, 120]
@@ -187,7 +187,7 @@ def align_m2q_to_ref_m2q(ref_m2q,tof,nom_voltage=5500):
     flight_length = 89e-3
     avog_number = 6.022e23
 
-    t0 = 1
+#    t0 = 1
     print("t0_guess = "+str(t0))
 
     c_historical = 1.39325423*1e-4    
