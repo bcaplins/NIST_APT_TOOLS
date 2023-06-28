@@ -187,69 +187,99 @@ def cartesian_product(arrays):
     ndim = len(arrays)
     return np.stack(np.meshgrid(*arrays), axis=-1).reshape(-1, ndim)
 
+def get_tof_to_m2q_coeffs(m2qs, tofs):
+    rat = np.sqrt(m2qs[0]/m2qs[1])
+        
+    p1 = (tofs[1]*rat-tofs[0])/(rat-1)
+    p0 = m2qs[0]/np.square(tofs[0]-p1)
+    
+    return np.array([p0*1e4, p1])
+    
 
 
 
 
 plt.close('all')
 
-#fn_R44 = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\MgO\R44_03636-v01.epos'
-#fn_R20 = r'C:\Users\capli\Google Drive\NIST\pos_and_epos_files\MgO\R20_08084-v01.epos'
 
-fn = r'C:\Users\bwc\Downloads\ePOStest2.epos'
+ref_fn = r'.\R44_03711-v01_ref.epos'
+
+#fn = r'C:\Users\bwc\Documents\NetBeansProjects\cal with 2kV-9kV_\recons\recon-v01\default\cal with 2kV-9kV_R44_03727-v01.epos'
+fn = r'C:\Users\bwc\Documents\NetBeansProjects\R44_03705\recons\recon-v01\default\R44_03705-v01.epos'
+#fn = r'C:\Users\bwc\Documents\NetBeansProjects\R44_03707\recons\recon-v01\default\R44_03707-v01.epos'
+#fn = r'C:\Users\bwc\Documents\NetBeansProjects\R44_03711\recons\recon-v01\default\R44_03711-v01.epos'
+
+fn = r'C:\Users\bwc\Documents\NetBeansProjects\R20_28285\recons\recon-v01\default\R20_28285-v01.epos'
 
 
-ref_epos = apt_fileio.read_epos_numpy(fn)
+
+ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 
 epos = apt_fileio.read_epos_numpy(fn)
 
 # voltage and bowl correct ToF data.  
-#p_volt = np.array([])
-#p_bowl = np.array([ 0.89964083, -0.43114144, -0.27484715, -0.25883824])
+p_volt = np.array([])
+p_bowl = np.array([ 0.89964083, -0.43114144, -0.27484715, -0.25883824])
 
 
-#_, p_volt, p_bowl = do_voltage_and_bowl(epos[epos['ipp']==1],p_volt,p_bowl)   
+_, p_volt, p_bowl = do_voltage_and_bowl(epos[epos['ipp']==1],p_volt,p_bowl)   
 
+#tofs = mod_full_vb_correction(epos,p_volt,p_bowl)
+#plotting_stuff.plot_histo(tofs, fig_idx=1,user_label='',clearFigure=True,scale_factor=1/epos.size, user_xlim=[0, 1000], user_bin_width=0.25)
+#p0_m2q = get_tof_to_m2q_coeffs(m2qs=[1, 70.92], tofs=[65.7, 626.86])
+#m2q_corr = m2q_calib.mod_physics_m2q_calibration(p0_m2q, tofs)
 
 # Find transform to m/z space
-#epos['m2q'], p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],mod_full_vb_correction(epos,p_volt,p_bowl))
-
-plotting_stuff.plot_histo(epos['m2q'],fig_idx=1,user_label='MgO',clearFigure=True,scale_factor=1/epos.size)
+m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],mod_full_vb_correction(epos,p_volt,p_bowl))
 
 
+sc = 1 
 
-epos_vb = epos.copy()
-epos_vb['tof'] = np.sqrt(1e4*epos['m2q'])
-
-
-edges, ch = corrhist(epos_vb,roi = [00, 1000], delta=.2)
-centers = (edges[1:]+edges[:-1])/2.0
-
-fig2 = plt.figure(num=3)
-fig2.clf()
-ax2 = fig2.gca()   
-plot_2d_histo(ax2, ch, edges, edges, scale='log')
-ax2.axis('equal')
-ax2.axis('square')
-ax2.set_xlabel('ns')
-ax2.set_ylabel('ns')
-ax2.set_title('MgO')
+plotting_stuff.plot_histo(epos['m2q'],fig_idx=1,user_label='(ivas)',clearFigure=True,scale_factor=1/epos.size, user_xlim=[0, 150], user_bin_width=0.03)
+plotting_stuff.plot_histo(m2q_corr/sc,fig_idx=1,user_label='(python)',clearFigure=False,scale_factor=1/epos.size*1e3, user_xlim=[0, 150], user_bin_width=0.03)
 
 
+plotting_stuff.plot_bowl_slices(epos['m2q'], epos, 3,user_ylim=[0, 110])
+plotting_stuff.plot_bowl_slices(m2q_corr, epos, 3,user_ylim=[0, 110])
 
-idxs1 = np.where(epos['ipp']==1)[0]
+#
+#epos_vb = epos.copy()
+#epos_vb['tof'] = np.sqrt(1e4*epos['m2q'])
 
-idxs2 = np.where(epos['ipp']==2)[0]
-idxs2 = np.r_[idxs2, idxs2+1]
-idxs2 = np.sort(idxs2)
-
-
-
+#
+#epos_vb = epos_vb[idxs2]
+#
+#edges, ch = corrhist(epos_vb,roi = [00, 600], delta=.1)
+#centers = (edges[1:]+edges[:-1])/2.0
+#
+#fig2 = plt.figure(num=3)
+#fig2.clf()
+#ax2 = fig2.gca()   
+#plot_2d_histo(ax2, ch, edges, edges, scale='log')
+#ax2.axis('equal')
+#ax2.axis('square')
+#ax2.set_xlabel('ns')
+#ax2.set_ylabel('ns')
+#ax2.set_title('Si')
 
 
 
-plotting_stuff.plot_histo(epos['m2q'][idxs1],4,user_bin_width=0.005)
-plotting_stuff.plot_histo(epos['m2q'][idxs2],4,clearFigure=False,user_bin_width=0.005)
+
+
+
+#
+#idxs1 = np.where(epos['ipp']==1)[0]
+#
+#idxs2 = np.where(epos['ipp']==2)[0]
+#idxs2 = np.sort(np.r_[idxs2,idxs2+1])
+#
+#idxs3 = np.where(epos['ipp']==3)[0]
+#idxs3 = np.sort(np.r_[idxs3,idxs3+1,idxs3+2])
+#
+#plotting_stuff.plot_histo(np.sqrt(epos['m2q'][idxs1]*1e4), 111, clearFigure=True, user_xlim=[0, 1000], user_bin_width=0.1)
+#plotting_stuff.plot_histo(np.sqrt(epos['m2q'][idxs2]*1e4), 111, clearFigure=False, user_xlim=[0, 1000], user_bin_width=0.1)
+#plotting_stuff.plot_histo(np.sqrt(epos['m2q'][idxs3]*1e4), 111, clearFigure=False, user_xlim=[0, 1000], user_bin_width=0.1)
+#
 
 
 
