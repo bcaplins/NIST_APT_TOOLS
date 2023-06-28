@@ -31,13 +31,22 @@ from histogram_functions import bin_dat
 fns = [r"Ga2O3 epos files\R20_28215_3800pA"]
 
 # R20 Constant evaporation rate, incresing E/pulse
-#fns = [r"Ga2O3 epos files\R20_28222_69300pA", 
+fns = [r"Ga2O3 epos files\R20_28222_69300pA", 
+       r"Ga2O3 epos files\R20_28221_21900pA",
+       r"Ga2O3 epos files\R20_28220_12000pA", 
+       r"Ga2O3 epos files\R20_28216_4000pA",
+       r"Ga2O3 epos files\R20_28224_1740pA",
+        r"Ga2O3 epos files\R20_28218_862pA",
+        r"Ga2O3 epos files\R20_28219_500pA"]
+
+# R20 Constant evaporation rate, incresing E/pulse chronological order
+#fns = [r"Ga2O3 epos files\R20_28224_1740pA",
+#       r"Ga2O3 epos files\R20_28222_69300pA", 
 #       r"Ga2O3 epos files\R20_28221_21900pA",
-#       r"Ga2O3 epos files\R20_28220_12000pA", 
-#       r"Ga2O3 epos files\R20_28216_4000pA",
-#       r"Ga2O3 epos files\R20_28224_1740pA",
-#        r"Ga2O3 epos files\R20_28218_862pA",
-#        r"Ga2O3 epos files\R20_28219_500pA"]
+#       r"Ga2O3 epos files\R20_28220_12000pA",
+#       r"Ga2O3 epos files\R20_28219_500pA",
+#       r"Ga2O3 epos files\R20_28218_862pA",
+#       r"Ga2O3 epos files\R20_28216_4000pA"]
 
 # R20 Constant SV=3800 V, varying E/pulse
 #fns = [r"Ga2O3 epos files\R20_28227_68600pA",
@@ -52,13 +61,13 @@ fns = [r"Ga2O3 epos files\R20_28215_3800pA"]
 
 # R20 Constant SV=4700 V, varying E/pulse
 #fns = [r"Ga2O3 epos files\R20_28254_11500pA",
-#       r"Ga2O3 epos files\R20_28261_11500pA",
-#       r"Ga2O3 epos files\R20_28253_4300pA",
+##       r"Ga2O3 epos files\R20_28261_11500pA",
+##       r"Ga2O3 epos files\R20_28253_4300pA",
 #       r"Ga2O3 epos files\R20_28262_4300pA",
 #       r"Ga2O3 epos files\R20_28255_1770pA",
-#       r"Ga2O3 epos files\R20_28260_1770pA",
+##       r"Ga2O3 epos files\R20_28260_1770pA",
 #       r"Ga2O3 epos files\R20_28256_925pA",
-#       r"Ga2O3 epos files\R20_28259_925pA",
+##       r"Ga2O3 epos files\R20_28259_925pA",
 #       r"Ga2O3 epos files\R20_28257_500pA",
 #       r"Ga2O3 epos files\R20_28258_265pA"]
 
@@ -150,12 +159,13 @@ for i in range(len(fns)):
     ax.plot(xs,ys_sm/nm*10**(3*i),label=fns[i])
     # ax.plot(xs,glob_bg/nm,label='global bg')
     
+    ax.set(xlim=[45,55])
     ax.set(xlabel='m/z (Da)', ylabel='~counts')
     ax.grid()
     fig.tight_layout()
     fig.canvas.manager.window.raise_()
     ax.set_yscale('log')    
-    ax.legend()
+#    ax.legend()
 
     # plotting_stuff.plot_histo(epos['tof'],200,user_label=fns[i][:-5],clearFigure=False,user_xlim=[0,40000],user_bin_width=100, scale_factor=1, user_color=None)
     
@@ -208,20 +218,14 @@ for i in range(len(fns)):
 #conc_O=[64.01,62.07,60.76,59.92,56.55,58.88,56.87,54.45]
 #uncert=[1.11,0.90,0.84,0.73,0.78,0.76,0.68,0.72]
 
-# R44 25 kHz constant SV=4900 V, varying E/pulse
-CSR=[5.348369283,6.613236189,2.68074861,8.102977617,0.758625752]
-conc_Ga=[49.82,49.55,51.34,49.13,57.96]
-conc_O=[50.18,50.46,48.66,50.87,42.04]
-uncert=[1.11,0.90,0.84,0.73,0.78]
-
 fig = plt.figure(num=200)
 fig.clear()
 ax = fig.gca()
-plt.errorbar(CSR,conc_Ga,yerr=2*np.array(uncert),fmt ='o',label="Al",capsize=5,markersize=4)#,'ko',label="Ga")
+plt.errorbar(CSR,conc_Ga,yerr=2*np.array(uncert),fmt ='o',label="Ga",capsize=5,markersize=4)#,'ko',label="Ga")
 plt.errorbar(CSR,conc_O,yerr=2*np.array(uncert),fmt = 'o',label="O",capsize=5,markersize=4)#,'rs',label="O")
 plt.legend()
 #ax.set(xlabel='m/z (Da)', ylabel='Apparent composition (at. %)')
-ax.set(xlabel='Charge State Ratio ($Al^{++}/Al^+$)', ylabel='Apparent composition (at. %)')
+ax.set(xlabel='Charge State Ratio ($Ga^{++}/Ga^+$)', ylabel='Apparent composition (at. %)')
 
 
 xxlim = [0, 10]

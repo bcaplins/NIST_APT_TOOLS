@@ -54,7 +54,11 @@ ref_epos = apt_fileio.read_epos_numpy(ref_fn)
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07167-v03.epos"
 #fn = r"Q:\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181210_D315_A74\R20_07148-v02.epos"
 #fn = r"\\cfs2w.campus.nist.gov\647\NIST_Projects\EUV_APT_IMS\BWC\GaN epos files\181204_InGaNQW_A73\R20_07144-v02.epos"
-fn = r"SiO2 epos files\R20_28197-400nm.epos"
+#<<<<<<< Updated upstream
+#fn = r"SiO2 epos files\R20_28197-400nm.epos"
+#fn = r"SiO2 epos files\R20_28197-1200nm.epos"
+fn = r"SiO2 epos files\R20_28314.epos"
+#>>>>>>> Stashed changes
 epos = apt_fileio.read_epos_numpy(fn)
 #epos = epos[25000:-1]
 
@@ -94,7 +98,7 @@ m2q_corr, p_m2q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr)
 pointwise_scales = sed_corr.get_all_scale_coeffs(m2q_corr,
                                                 max_scale=1.15,
                                                   roi=[0.5,75],
-                                                  cts_per_chunk=2**8,
+                                                  cts_per_chunk=2**10,
                                                   delta_logdat=5e-4)
                                                                                  
 # Compute corrected data
@@ -116,12 +120,13 @@ m2q_corr_q, p_m2q_q = m2q_calib.align_m2q_to_ref_m2q(ref_epos['m2q'],tof_corr_q)
 # Define calibration peaks
 ed = initElements_P3.initElements()
 ref_pk_m2qs = np.array([    ed['H'].isotopes[1][0],
-                            ed['H'].isotopes[2][0],
                         ed['Si'].isotopes[28][0]/2,
                         ed['O'].isotopes[16][0]/1,
+                        ed['Si'].isotopes[28][0],
                         ed['O'].isotopes[16][0]*2,
                         (ed['Si'].isotopes[28][0]+ed['O'].isotopes[16][0])/1,
                         (ed['Si'].isotopes[28][0]+2*ed['O'].isotopes[16][0])/1])
+
 
 # Perform 'linearization' m2q calibration
 m2q_corr2 = m2q_calib.calibrate_m2q_by_peak_location(m2q_corr_q,ref_pk_m2qs)
